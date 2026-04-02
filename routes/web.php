@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Survey\TakingController;
+use App\Http\Controllers\Survey\SyncController;
 use App\Http\Controllers\Api\PsgcController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,7 @@ Route::prefix('api/psgc')->group(function () {
 Route::get('/s/{token}',       [TakingController::class, 'show'])->name('survey.show');
 Route::post('/s/{token}',      [TakingController::class, 'submit'])->name('survey.submit');
 Route::get('/s/{token}/done',  [TakingController::class, 'complete'])->name('survey.complete');
+Route::post('/s/{token}/sync', [SyncController::class, 'sync'])->name('survey.sync');  // offline sync (CSRF-exempt)
 
 // Auth
 Route::get('/login',  [LoginController::class, 'showForm'])->name('login');

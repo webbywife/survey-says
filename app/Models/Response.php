@@ -9,7 +9,7 @@ class Response extends Model
 {
     protected $fillable = [
         'survey_id', 'serial', 'status', 'started_at', 'completed_at',
-        'duration_seconds', 'ip_address', 'user_agent', 'respondent_token',
+        'duration_seconds', 'ip_address', 'user_agent', 'respondent_token', 'is_offline_sync',
     ];
 
     protected $casts = [

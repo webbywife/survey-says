@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>{{ $survey->title }}</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#550D0E">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -23,8 +25,8 @@
     .choice-list label{display:flex;align-items:center;gap:10px;cursor:pointer;padding:9px 13px;border:1px solid #e8e8e8;border-radius:6px;transition:background .12s,border-color .12s;font-size:14px}
     .choice-list label:hover{background:#faf6ef;border-color:#C9A84C}
     input[type=radio],input[type=checkbox]{accent-color:#7B1213;width:16px;height:16px;flex-shrink:0}
-    input[type=text],input[type=number],input[type=date],input[type=time],textarea{width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s}
-    input:focus,textarea:focus{border-color:#7B1213}
+    input[type=text],input[type=number],input[type=date],input[type=time],textarea,select{width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit;outline:none;transition:border-color .15s;background:#fff}
+    input:focus,textarea:focus,select:focus{border-color:#7B1213}
     textarea{resize:vertical;min-height:90px}
     .rating-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
     .r-btn{width:44px;height:44px;border:2px solid #ddd;border-radius:7px;background:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .12s}
@@ -38,10 +40,27 @@
     .submit-wrap{text-align:center;margin:32px 0 48px}
     .btn-sub{background:#7B1213;color:#fff;border:none;padding:14px 48px;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Lato',sans-serif;transition:background .15s}
     .btn-sub:hover{background:#550D0E}
+    .btn-sub:disabled{background:#aaa;cursor:not-allowed}
     .skip-hide{display:none!important}
+    /* Offline banner */
+    #offline-bar{display:none;position:sticky;top:0;z-index:999;background:#b45309;color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:700;letter-spacing:.03em}
+    #offline-bar.show{display:block}
+    /* Sync queue banner */
+    #sync-bar{display:none;position:sticky;top:0;z-index:998;background:#1e3a5f;color:#fff;padding:10px 20px;font-size:13px;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap}
+    #sync-bar.show{display:flex}
+    #sync-bar button{background:#fff;color:#1e3a5f;border:none;padding:5px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+    #sync-bar button:disabled{opacity:.5;cursor:not-allowed}
   </style>
 </head>
 <body>
+
+<div id="offline-bar">⚡ You are offline — answers will be saved to this device and synced when back online.</div>
+<div id="sync-bar">
+  <span id="sync-count-txt"></span>
+  <button id="sync-btn" onclick="syncNow()">Sync Now</button>
+  <span id="sync-status"></span>
+</div>
+
 <div class="s-header">
   <div class="inner">
     <div class="s-seal">S</div>
@@ -181,7 +200,6 @@
 
             fetch('/api/psgc/provinces').then(r=>r.json()).then(provinces=>{
               const sel = document.getElementById('ph-prov-'+qid);
-              // Group by region
               const byRegion = {};
               provinces.forEach(p=>{
                 if(!byRegion[p.region_name]) byRegion[p.region_name]=[];
@@ -199,14 +217,26 @@
                 sel.appendChild(grp);
               });
               if(savedProv) loadCities(qid, savedProv, '', savedCity, savedBrgy);
+            }).catch(()=>{
+              // Offline and not cached — fall back to text input
+              const sel = document.getElementById('ph-prov-'+qid);
+              sel.style.display='none'; sel.removeAttribute('required'); sel.removeAttribute('name');
+              const txt = document.createElement('input');
+              txt.type='text'; txt.name='q_'+qid+'_province';
+              txt.placeholder='Province (type manually)';
+              txt.style='width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit';
+              txt.value = savedProv || '';
+              sel.parentNode.insertBefore(txt, sel.nextSibling);
             });
           })();
 
           function loadCities(qid, provCode, provName, savedCity, savedBrgy){
             if(!provCode) return;
-            document.getElementById('ph-prov-name-'+qid).value = provName ||
-              document.getElementById('ph-prov-'+qid).options[document.getElementById('ph-prov-'+qid).selectedIndex].text;
+            const nameEl = document.getElementById('ph-prov-name-'+qid);
+            if(nameEl) nameEl.value = provName ||
+              (document.getElementById('ph-prov-'+qid)?.options[document.getElementById('ph-prov-'+qid)?.selectedIndex]?.text || '');
             const citySel = document.getElementById('ph-city-'+qid);
+            if(!citySel) return;
             citySel.innerHTML = '<option value="">— Select City / Municipality —</option>';
             document.getElementById('ph-brgy-'+qid).innerHTML = '<option value="">— Select Barangay —</option>';
             fetch('/api/psgc/cities/'+encodeURIComponent(provCode)).then(r=>r.json()).then(cities=>{
@@ -217,36 +247,45 @@
                 citySel.appendChild(opt);
               });
               if(savedCity) loadBarangays(qid, savedCity, '', savedBrgy||'');
+            }).catch(()=>{
+              citySel.style.display='none'; citySel.removeAttribute('name');
+              const txt = document.createElement('input');
+              txt.type='text'; txt.name='q_'+qid+'_city';
+              txt.placeholder='City/Municipality (type manually)';
+              txt.style='width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit';
+              citySel.parentNode.insertBefore(txt, citySel.nextSibling);
             });
           }
 
           function loadBarangays(qid, cityCode, cityName, savedBrgy){
             if(!cityCode) return;
-            document.getElementById('ph-city-name-'+qid).value = cityName ||
-              document.getElementById('ph-city-'+qid).options[document.getElementById('ph-city-'+qid).selectedIndex].text;
+            const nameEl = document.getElementById('ph-city-name-'+qid);
+            if(nameEl) nameEl.value = cityName ||
+              (document.getElementById('ph-city-'+qid)?.options[document.getElementById('ph-city-'+qid)?.selectedIndex]?.text || '');
             const brgySel = document.getElementById('ph-brgy-'+qid);
             const brgyTxt = document.getElementById('ph-brgy-txt-'+qid);
+            if(!brgySel) return;
             brgySel.innerHTML = '<option value="">Loading…</option>';
             fetch('/api/psgc/barangays/'+encodeURIComponent(cityCode)).then(r=>r.json()).then(barangays=>{
               if(barangays.length === 0){
-                brgySel.style.display = 'none';
-                brgySel.removeAttribute('name');
-                brgyTxt.style.display = '';
-                brgyTxt.name = 'q_'+qid+'_barangay';
+                brgySel.style.display='none'; brgySel.removeAttribute('name');
+                brgyTxt.style.display=''; brgyTxt.name='q_'+qid+'_barangay';
                 brgyTxt.value = savedBrgy||'';
               } else {
-                brgySel.style.display = '';
-                brgySel.name = 'q_'+qid+'_barangay';
-                brgyTxt.style.display = 'none';
-                brgyTxt.removeAttribute('name');
-                brgySel.innerHTML = '<option value="">— Select Barangay —</option>';
+                brgySel.style.display=''; brgySel.name='q_'+qid+'_barangay';
+                brgyTxt.style.display='none'; brgyTxt.removeAttribute('name');
+                brgySel.innerHTML='<option value="">— Select Barangay —</option>';
                 barangays.forEach(b=>{
-                  const opt = document.createElement('option');
-                  opt.value = b.name; opt.textContent = b.name;
-                  if(b.name === (savedBrgy||'')) opt.selected = true;
+                  const opt=document.createElement('option');
+                  opt.value=b.name; opt.textContent=b.name;
+                  if(b.name===(savedBrgy||'')) opt.selected=true;
                   brgySel.appendChild(opt);
                 });
               }
+            }).catch(()=>{
+              brgySel.style.display='none'; brgySel.removeAttribute('name');
+              brgyTxt.style.display=''; brgyTxt.name='q_'+qid+'_barangay';
+              brgyTxt.value=savedBrgy||'';
             });
           }
           </script>
@@ -258,12 +297,173 @@
     @endforeach
 
     <div class="submit-wrap">
-      <button type="submit" class="btn-sub">Submit Survey</button>
+      <button type="submit" class="btn-sub" id="submit-btn">Submit Survey</button>
     </div>
   </form>
 </div>
 
 <script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+const SURVEY_TOKEN = '{{ $survey->public_token }}';
+const SURVEY_TITLE = {{ Js::from($survey->title) }};
+const SYNC_URL     = '/s/' + SURVEY_TOKEN + '/sync';
+const START_TIME   = Date.now();
+
+// ─── IndexedDB ───────────────────────────────────────────────────────────────
+const IDB = {
+  _db: null,
+  open() {
+    if (this._db) return Promise.resolve(this._db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('surveysays-offline', 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('pending')) {
+          const store = db.createObjectStore('pending', { keyPath: 'id', autoIncrement: true });
+          store.createIndex('by_token', 'survey_token', { unique: false });
+        }
+      };
+      req.onsuccess = e => { this._db = e.target.result; resolve(this._db); };
+      req.onerror   = () => reject(req.error);
+    });
+  },
+  async add(record) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('pending', 'readwrite');
+      const req = tx.objectStore('pending').add(record);
+      req.onsuccess = () => resolve(req.result);
+      tx.onerror    = () => reject(tx.error);
+    });
+  },
+  async getAll() {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction('pending', 'readonly');
+      const req = tx.objectStore('pending').getAll();
+      req.onsuccess = () => resolve(req.result);
+      tx.onerror    = () => reject(tx.error);
+    });
+  },
+  async delete(id) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('pending', 'readwrite');
+      tx.objectStore('pending').delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror    = () => reject(tx.error);
+    });
+  },
+  async count() {
+    const db  = await this.open();
+    const all = await this.getAll();
+    return all.filter(r => r.survey_token === SURVEY_TOKEN && r.status === 'pending').length;
+  }
+};
+
+// ─── Serialize form (handles multi-values & bracket notation) ────────────────
+function serializeForm(form) {
+  const params = new URLSearchParams();
+  // Add extra offline metadata
+  params.append('_respondent_token', crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2)));
+  params.append('_saved_at', new Date().toISOString());
+  params.append('_duration', Math.round((Date.now() - START_TIME) / 1000));
+
+  const fd = new FormData(form);
+  for (const [key, value] of fd.entries()) {
+    if (key === '_token') continue; // skip CSRF
+    params.append(key, value);
+  }
+  return params.toString();
+}
+
+// ─── Offline/Online UI ───────────────────────────────────────────────────────
+function setOfflineUI(offline) {
+  document.getElementById('offline-bar').classList.toggle('show', offline);
+  const btn = document.getElementById('submit-btn');
+  if (btn) btn.textContent = offline ? 'Save Offline' : 'Submit Survey';
+}
+
+async function refreshSyncBar() {
+  const pending = await IDB.getAll();
+  const mine = pending.filter(r => r.survey_token === SURVEY_TOKEN && r.status === 'pending');
+  const bar  = document.getElementById('sync-bar');
+  if (mine.length > 0) {
+    document.getElementById('sync-count-txt').textContent =
+      mine.length + ' response' + (mine.length > 1 ? 's' : '') + ' saved offline, pending upload';
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+// ─── Sync pending responses ───────────────────────────────────────────────────
+async function syncNow() {
+  if (!navigator.onLine) return;
+  const btn    = document.getElementById('sync-btn');
+  const status = document.getElementById('sync-status');
+  btn.disabled = true; btn.textContent = 'Syncing…';
+
+  const pending = (await IDB.getAll()).filter(r => r.survey_token === SURVEY_TOKEN && r.status === 'pending');
+  let synced = 0, failed = 0;
+
+  for (const record of pending) {
+    try {
+      const res = await fetch(SYNC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: record.form_data,
+      });
+      if (res.ok) {
+        await IDB.delete(record.id);
+        synced++;
+      } else {
+        failed++;
+      }
+    } catch {
+      failed++;
+    }
+  }
+
+  btn.disabled = false; btn.textContent = 'Sync Now';
+  if (synced > 0) {
+    status.textContent = '✓ ' + synced + ' uploaded';
+    status.style.color = '#90e0a0';
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }
+  if (failed > 0) {
+    status.textContent = '✗ ' + failed + ' failed — will retry';
+    status.style.color = '#f87171';
+  }
+  await refreshSyncBar();
+}
+
+// ─── Form submit interceptor ──────────────────────────────────────────────────
+document.getElementById('sf').addEventListener('submit', async function(e) {
+  if (navigator.onLine) return; // let regular POST proceed
+
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  try {
+    await IDB.add({
+      survey_token:    SURVEY_TOKEN,
+      survey_title:    SURVEY_TITLE,
+      respondent_token: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2)),
+      form_data:       serializeForm(this),
+      saved_at:        new Date().toISOString(),
+      status:          'pending',
+    });
+    // Redirect to a "saved offline" thank-you page
+    window.location.href = '/s/' + SURVEY_TOKEN + '/done?offline=1';
+  } catch(err) {
+    btn.disabled = false; btn.textContent = 'Save Offline';
+    alert('Could not save response. Please try again.\n' + err.message);
+  }
+});
+
+// ─── Skip logic ───────────────────────────────────────────────────────────────
 const skipRules = {!! $skipRulesJson !!};
 const allCards  = Array.from(document.querySelectorAll('.q-card'));
 
@@ -290,7 +490,6 @@ function applySkip(){
       if(match)break;
     }
     if(match){
-      // hide questions between source and target
       let inRange=false;
       for(const card of allCards){
         const id=parseInt(card.dataset.qid);
@@ -320,6 +519,18 @@ function selRating(btn){
 
 document.querySelectorAll('input[type=radio],input[type=checkbox]').forEach(el=>el.addEventListener('change',applySkip));
 applySkip();
+
+// ─── Online/offline event listeners ──────────────────────────────────────────
+window.addEventListener('online',  () => { setOfflineUI(false); syncNow(); });
+window.addEventListener('offline', () => setOfflineUI(true));
+setOfflineUI(!navigator.onLine);
+refreshSyncBar();
+
+// ─── Register Service Worker ──────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .catch(err => console.warn('SW registration failed:', err));
+}
 </script>
 </body>
 </html>

@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+        // Offline sync endpoint uses respondent_token for deduplication, not CSRF
+        $middleware->validateCsrfTokens(except: [
+            '/s/*/sync',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

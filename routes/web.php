@@ -11,6 +11,9 @@ use App\Http\Controllers\Survey\TakingController;
 use App\Http\Controllers\Api\PsgcController;
 use Illuminate\Support\Facades\Route;
 
+// Root redirect
+Route::get('/', fn() => redirect('/admin'));
+
 // PSGC location API (public, cached)
 Route::prefix('api/psgc')->group(function () {
     Route::get('provinces',            [PsgcController::class, 'provinces']);

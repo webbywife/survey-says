@@ -1,4 +1,4 @@
-const CACHE_VER    = 'v1';
+const CACHE_VER    = 'v2';
 const PSGC_CACHE   = 'ss-psgc-'   + CACHE_VER;
 const SURVEY_CACHE = 'ss-survey-' + CACHE_VER;
 
@@ -49,8 +49,8 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Survey take pages /s/{token} — network-first, fall back to cache
-  if (url.pathname.match(/^\/s\/[^/]+\/?$/)) {
+  // Survey take pages /s/{token} and /s/{token}/done — network-first, fall back to cache
+  if (url.pathname.match(/^\/s\/[^/]+(\/done)?\/?(\?.*)?$/)) {
     event.respondWith(
       fetch(event.request)
         .then(res => {

@@ -300,6 +300,22 @@
       <button type="submit" class="btn-sub" id="submit-btn">Submit Survey</button>
     </div>
   </form>
+
+  {{-- Shown inline when response is saved offline (no network redirect needed) --}}
+  <div id="offline-saved" style="display:none;text-align:center;padding:48px 20px 64px">
+    <div style="width:64px;height:64px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2.5" width="32" height="32"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+    </div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:24px;color:#222;margin-bottom:10px">Saved Offline</h2>
+    <p style="font-size:15px;color:#666;max-width:360px;margin:0 auto 8px;line-height:1.6">
+      Your response has been saved to this device.<br>
+      It will upload automatically when you reconnect.
+    </p>
+    <p id="offline-saved-count" style="font-size:13px;color:#aaa;margin-bottom:24px"></p>
+    <a href="/s/{{ $survey->public_token }}" class="btn-sub" style="display:inline-block;text-decoration:none;padding:12px 32px">
+      New Response
+    </a>
+  </div>
 </div>
 
 <script>
@@ -455,8 +471,15 @@ document.getElementById('sf').addEventListener('submit', async function(e) {
       saved_at:        new Date().toISOString(),
       status:          'pending',
     });
-    // Redirect to a "saved offline" thank-you page
-    window.location.href = '/s/' + SURVEY_TOKEN + '/done?offline=1';
+    // Show inline success — don't redirect (done page may not be cached offline)
+    document.querySelector('.s-body form').style.display = 'none';
+    const savedDiv = document.getElementById('offline-saved');
+    savedDiv.style.display = '';
+    const count = await IDB.count();
+    if (count > 1) {
+      document.getElementById('offline-saved-count').textContent =
+        count + ' response(s) queued on this device — will sync when online.';
+    }
   } catch(err) {
     btn.disabled = false; btn.textContent = 'Save Offline';
     alert('Could not save response. Please try again.\n' + err.message);

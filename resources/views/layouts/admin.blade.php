@@ -136,6 +136,11 @@
       Users
     </a>
     @endif
+    <div class="nav-label">Help</div>
+    <a href="{{ route('admin.docs') }}" class="nav-item {{ request()->routeIs('admin.docs') ? 'active' : '' }}">
+      <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="2" y="1" width="12" height="14" rx="1"/><line x1="5" y1="5" x2="11" y2="5"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="5" y1="11" x2="8" y2="11"/></svg>
+      Documentation
+    </a>
   </nav>
   <div class="sidebar-footer">
     <div class="user-info">

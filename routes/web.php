@@ -73,4 +73,7 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
 
     // Users (admin only)
     Route::resource('users', UserController::class)->except(['show'])->middleware('role:admin');
+
+    // Documentation
+    Route::get('docs', fn() => view('admin.docs'))->name('docs');
 });

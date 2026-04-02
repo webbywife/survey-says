@@ -122,12 +122,25 @@ const SID = {{ $survey->id }};
 const CSRF = document.querySelector('meta[name=csrf-token]').content;
 let editId = null, opts = [], rows = [];
 
-const allQ = @json($survey->questions->map(fn($q)=>[
-  'id'=>$q->id,'variable_code'=>$q->variable_code,'label'=>$q->label,
-  'type'=>$q->type,'is_required'=>$q->is_required,'help_text'=>$q->help_text,
-  'options'=>$q->options->map(fn($o)=>['id'=>$o->id,'option_code'=>$o->option_code,'label'=>$o->label])->values(),
-  'grid_rows'=>$q->gridRows->map(fn($r)=>['id'=>$r->id,'row_code'=>$r->row_code,'label'=>$r->label])->values(),
-])->values());
+@php
+$allQData = $survey->questions->map(function($q) {
+    return [
+        'id'            => $q->id,
+        'variable_code' => $q->variable_code,
+        'label'         => $q->label,
+        'type'          => $q->type,
+        'is_required'   => $q->is_required,
+        'help_text'     => $q->help_text,
+        'options'       => $q->options->map(function($o) {
+            return ['id' => $o->id, 'option_code' => $o->option_code, 'label' => $o->label];
+        })->values(),
+        'grid_rows'     => $q->gridRows->map(function($r) {
+            return ['id' => $r->id, 'row_code' => $r->row_code, 'label' => $r->label];
+        })->values(),
+    ];
+})->values();
+@endphp
+const allQ = @json($allQData);
 
 function onType(){
   const t=document.getElementById('f-type').value;

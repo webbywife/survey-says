@@ -50,14 +50,14 @@
     #sync-bar.show{display:flex}
     #sync-bar button{background:#fff;color:#1e3a5f;border:none;padding:5px 14px;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
     #sync-bar button:disabled{opacity:.5;cursor:not-allowed}
-    /* Collection mode toggle */
-    .mode-toggle{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
-    .mode-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;opacity:.75;text-transform:uppercase;transition:opacity .2s}
-    .mode-lbl.active{opacity:1}
-    .toggle-track{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.25);cursor:pointer;position:relative;transition:background .25s;border:1px solid rgba(255,255,255,.3);flex-shrink:0}
-    .toggle-track.forced{background:#b45309;border-color:#b45309}
-    .toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-    .toggle-track.forced .toggle-thumb{transform:translateX(20px)}
+    /* Collection mode bar */
+    #mode-bar{background:#3d0608;border-bottom:1px solid rgba(255,255,255,.08);padding:0 20px}
+    #mode-bar .inner{max-width:740px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;height:44px}
+    #mode-bar .mode-label{font-size:12px;color:rgba(255,255,255,.6);letter-spacing:.04em}
+    .mode-pills{display:flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
+    .mode-pill{padding:7px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s,color .2s;color:rgba(255,255,255,.5);background:transparent;border:none;font-family:'Lato',sans-serif;letter-spacing:.03em;white-space:nowrap}
+    .mode-pill.active-online{background:#2d6a2f;color:#fff}
+    .mode-pill.active-offline{background:#b45309;color:#fff}
   </style>
 </head>
 <body>
@@ -73,12 +73,14 @@
   <div class="inner">
     <div class="s-seal">S</div>
     <div class="s-title">{{ $survey->title }}</div>
-    <div class="mode-toggle" onclick="toggleCollectionMode()" title="Toggle collection mode">
-      <span class="mode-lbl" id="mode-lbl-online">Online</span>
-      <div class="toggle-track" id="mode-track">
-        <div class="toggle-thumb"></div>
-      </div>
-      <span class="mode-lbl" id="mode-lbl-offline">Offline</span>
+  </div>
+</div>
+<div id="mode-bar">
+  <div class="inner">
+    <span class="mode-label">Collection Mode</span>
+    <div class="mode-pills">
+      <button class="mode-pill" id="mode-pill-online"  onclick="setCollectionMode('online')">&#9679; Online</button>
+      <button class="mode-pill" id="mode-pill-offline" onclick="setCollectionMode('offline')">&#9675; Offline</button>
     </div>
   </div>
 </div>
@@ -348,17 +350,20 @@ function isForceOffline() {
 
 function applyModeUI() {
   const forced = isForceOffline();
-  document.getElementById('mode-track').classList.toggle('forced', forced);
-  document.getElementById('mode-lbl-online').classList.toggle('active', !forced);
-  document.getElementById('mode-lbl-offline').classList.toggle('active', forced);
+  const onlineBtn  = document.getElementById('mode-pill-online');
+  const offlineBtn = document.getElementById('mode-pill-offline');
+  onlineBtn.className  = 'mode-pill' + (!forced ? ' active-online'  : '');
+  offlineBtn.className = 'mode-pill' + ( forced ? ' active-offline' : '');
+  onlineBtn.innerHTML  = (!forced ? '&#9679;' : '&#9675;') + ' Online';
+  offlineBtn.innerHTML = ( forced ? '&#9679;' : '&#9675;') + ' Offline';
   // Update submit button label and offline bar
   const btn = document.getElementById('submit-btn');
   if (btn && !btn.disabled) btn.textContent = (forced || !navigator.onLine) ? 'Save Offline' : 'Submit Survey';
   document.getElementById('offline-bar').classList.toggle('show', forced || !navigator.onLine);
 }
 
-function toggleCollectionMode() {
-  localStorage.setItem(MODE_KEY, isForceOffline() ? 'online' : 'offline');
+function setCollectionMode(mode) {
+  localStorage.setItem(MODE_KEY, mode);
   applyModeUI();
 }
 

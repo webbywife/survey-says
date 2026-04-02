@@ -43,9 +43,7 @@ class DatabaseSeeder extends Seeder
         $o = 0;
 
         // Section I — Household
-        $this->q($survey, ++$o, 'PROVINCE',     'Province',                                    'open_text');
-        $this->q($survey, ++$o, 'CITY_MUN',     'City / Municipality',                         'open_text');
-        $this->q($survey, ++$o, 'BARANGAY',     'Barangay',                                    'open_text');
+        $this->q($survey, ++$o, 'LOCATION', 'Location (Province / City / Barangay)', 'ph_location');
         $this->q($survey, ++$o, 'HCN',          'DSWD Household Control No. (HCN)',            'open_text');
         $this->q($survey, ++$o, 'INTNO',        'SWS Interview No. (1–7989)',                  'number', ['min'=>1,'max'=>7989]);
         $this->q($survey, ++$o, 'WGP_CARD',     'WGP Card Number (16 digits)',                 'open_text');

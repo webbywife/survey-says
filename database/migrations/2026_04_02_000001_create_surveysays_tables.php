@@ -47,6 +47,7 @@ return new class extends Migration {
                 'date',
                 'time',
                 'grid',       // matrix/checklist grid
+                'ph_location',
             ]);
             $table->unsignedSmallInteger('sort_order')->default(0);
             $table->boolean('is_required')->default(true);

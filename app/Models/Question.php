@@ -28,4 +28,5 @@ class Question extends Model
     public function isChoiceType(): bool  { return in_array($this->type, ['single_choice', 'multi_select']); }
     public function isMultiSelect(): bool { return $this->type === 'multi_select'; }
     public function isGrid(): bool        { return $this->type === 'grid'; }
+    public function isPHLocation(): bool  { return $this->type === 'ph_location'; }
 }

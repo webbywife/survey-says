@@ -93,14 +93,23 @@ class TakingController extends Controller
         // Save all submitted answers
         foreach ($questions as $question) {
             $fieldName = 'q_' . $question->id;
-            if (!$request->has($fieldName) && $question->type !== 'grid') continue;
+            if (!$request->has($fieldName) && !in_array($question->type, ['grid', 'ph_location'])) continue;
 
             $answer = Answer::updateOrCreate(
                 ['response_id' => $response->id, 'question_id' => $question->id],
                 ['value_text' => null]
             );
 
-            if ($question->type === 'single_choice') {
+            if ($question->type === 'ph_location') {
+                $answer->update(['value_text' => json_encode([
+                    'province' => $request->input($fieldName . '_province_name', ''),
+                    'city'     => $request->input($fieldName . '_city_name', ''),
+                    'barangay' => $request->input($fieldName . '_barangay', ''),
+                    'province_code' => $request->input($fieldName . '_province', ''),
+                    'city_code'     => $request->input($fieldName . '_city', ''),
+                ])]);
+
+            } elseif ($question->type === 'single_choice') {
                 $answer->update(['value_text' => $request->input($fieldName)]);
                 $answer->selectedOptions()->delete();
                 $optCode = $request->input($fieldName);

@@ -135,6 +135,122 @@
             </table>
           </div>
 
+        @elseif($q->type==='ph_location')
+          @php
+            $locVal = $existing ? json_decode($existing->value_text ?? '{}', true) : [];
+          @endphp
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px">
+            <div>
+              <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Province / NCR</label>
+              <select name="q_{{ $q->id }}_province" id="ph-prov-{{ $q->id }}"
+                      style="width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit"
+                      onchange="loadCities({{ $q->id }}, this.value, this.options[this.selectedIndex].text)"
+                      {{ $q->is_required?'required':'' }}>
+                <option value="">— Select Province —</option>
+              </select>
+              <input type="hidden" name="q_{{ $q->id }}_province_name" id="ph-prov-name-{{ $q->id }}" value="{{ $locVal['province'] ?? '' }}">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">City / Municipality</label>
+              <select name="q_{{ $q->id }}_city" id="ph-city-{{ $q->id }}"
+                      style="width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit"
+                      onchange="loadBarangays({{ $q->id }}, this.value, this.options[this.selectedIndex].text)"
+                      {{ $q->is_required?'required':'' }}>
+                <option value="">— Select City / Municipality —</option>
+              </select>
+              <input type="hidden" name="q_{{ $q->id }}_city_name" id="ph-city-name-{{ $q->id }}" value="{{ $locVal['city'] ?? '' }}">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Barangay</label>
+              <select name="q_{{ $q->id }}_barangay" id="ph-brgy-{{ $q->id }}"
+                      style="width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit">
+                <option value="">— Select Barangay —</option>
+              </select>
+              <input type="text" name="q_{{ $q->id }}_barangay_txt" id="ph-brgy-txt-{{ $q->id }}"
+                     placeholder="Or type barangay name"
+                     style="display:none;width:100%;padding:10px 13px;border:1px solid #ddd;border-radius:6px;font-size:14px;font-family:inherit;margin-top:6px"
+                     value="{{ $locVal['barangay'] ?? '' }}">
+            </div>
+          </div>
+          <script>
+          (function(){
+            const qid = {{ $q->id }};
+            const savedProv = '{{ addslashes($locVal['province_code'] ?? '') }}';
+            const savedCity = '{{ addslashes($locVal['city_code'] ?? '') }}';
+            const savedBrgy = '{{ addslashes($locVal['barangay'] ?? '') }}';
+
+            fetch('/api/psgc/provinces').then(r=>r.json()).then(provinces=>{
+              const sel = document.getElementById('ph-prov-'+qid);
+              // Group by region
+              const byRegion = {};
+              provinces.forEach(p=>{
+                if(!byRegion[p.region_name]) byRegion[p.region_name]=[];
+                byRegion[p.region_name].push(p);
+              });
+              Object.keys(byRegion).sort().forEach(region=>{
+                const grp = document.createElement('optgroup');
+                grp.label = region;
+                byRegion[region].forEach(p=>{
+                  const opt = document.createElement('option');
+                  opt.value = p.code; opt.textContent = p.name;
+                  if(p.code === savedProv) opt.selected = true;
+                  grp.appendChild(opt);
+                });
+                sel.appendChild(grp);
+              });
+              if(savedProv) loadCities(qid, savedProv, '', savedCity, savedBrgy);
+            });
+          })();
+
+          function loadCities(qid, provCode, provName, savedCity, savedBrgy){
+            if(!provCode) return;
+            document.getElementById('ph-prov-name-'+qid).value = provName ||
+              document.getElementById('ph-prov-'+qid).options[document.getElementById('ph-prov-'+qid).selectedIndex].text;
+            const citySel = document.getElementById('ph-city-'+qid);
+            citySel.innerHTML = '<option value="">— Select City / Municipality —</option>';
+            document.getElementById('ph-brgy-'+qid).innerHTML = '<option value="">— Select Barangay —</option>';
+            fetch('/api/psgc/cities/'+encodeURIComponent(provCode)).then(r=>r.json()).then(cities=>{
+              cities.forEach(c=>{
+                const opt = document.createElement('option');
+                opt.value = c.code; opt.textContent = c.name + (c.city_class==='City'?' (City)':'');
+                if(c.code === (savedCity||'')) opt.selected = true;
+                citySel.appendChild(opt);
+              });
+              if(savedCity) loadBarangays(qid, savedCity, '', savedBrgy||'');
+            });
+          }
+
+          function loadBarangays(qid, cityCode, cityName, savedBrgy){
+            if(!cityCode) return;
+            document.getElementById('ph-city-name-'+qid).value = cityName ||
+              document.getElementById('ph-city-'+qid).options[document.getElementById('ph-city-'+qid).selectedIndex].text;
+            const brgySel = document.getElementById('ph-brgy-'+qid);
+            const brgyTxt = document.getElementById('ph-brgy-txt-'+qid);
+            brgySel.innerHTML = '<option value="">Loading…</option>';
+            fetch('/api/psgc/barangays/'+encodeURIComponent(cityCode)).then(r=>r.json()).then(barangays=>{
+              if(barangays.length === 0){
+                brgySel.style.display = 'none';
+                brgySel.removeAttribute('name');
+                brgyTxt.style.display = '';
+                brgyTxt.name = 'q_'+qid+'_barangay';
+                brgyTxt.value = savedBrgy||'';
+              } else {
+                brgySel.style.display = '';
+                brgySel.name = 'q_'+qid+'_barangay';
+                brgyTxt.style.display = 'none';
+                brgyTxt.removeAttribute('name');
+                brgySel.innerHTML = '<option value="">— Select Barangay —</option>';
+                barangays.forEach(b=>{
+                  const opt = document.createElement('option');
+                  opt.value = b.name; opt.textContent = b.name;
+                  if(b.name === (savedBrgy||'')) opt.selected = true;
+                  brgySel.appendChild(opt);
+                });
+              }
+            });
+          }
+          </script>
+
         @else
           <textarea name="q_{{ $q->id }}" style="margin-top:12px" {{ $q->is_required?'required':'' }}>{{ $existing?->value_text??'' }}</textarea>
         @endif

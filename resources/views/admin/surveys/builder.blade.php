@@ -77,6 +77,7 @@
           <option value="date">Date</option>
           <option value="time">Time</option>
           <option value="grid">Grid / Checklist</option>
+          <option value="ph_location">PH Location (Province / City / Barangay)</option>
         </select>
       </div>
       <div class="form-group">
@@ -87,6 +88,13 @@
     <div class="form-group">
       <label>Help Text</label>
       <input type="text" id="f-help">
+    </div>
+
+    <div id="ph-loc-info" style="display:none;background:#f0f4ff;border:1px solid #c7d7ff;border-radius:5px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#3355aa">
+      <strong>PH Location</strong> — renders 3 cascading dropdowns (Province → City/Municipality → Barangay).
+      STG export: <code style="background:#e8edff;padding:1px 4px;border-radius:3px">{code}</code>,
+      <code style="background:#e8edff;padding:1px 4px;border-radius:3px">{code}_CITY</code>,
+      <code style="background:#e8edff;padding:1px 4px;border-radius:3px">{code}_BRGY</code>.
     </div>
 
     <div id="opts-section" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-top:4px">
@@ -148,6 +156,8 @@ function onType(){
   document.getElementById('opts-section').style.display=hasOpts?'':'none';
   document.getElementById('rows-section').style.display=t==='grid'?'':'none';
   document.getElementById('opts-note').textContent=t==='grid'?'(columns)':t==='rating'?'(scale points)':'';
+  const locInfo=document.getElementById('ph-loc-info');
+  if(locInfo) locInfo.style.display=t==='ph_location'?'':'none';
 }
 
 function renderOpts(){

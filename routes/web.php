@@ -8,7 +8,15 @@ use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Survey\TakingController;
+use App\Http\Controllers\Api\PsgcController;
 use Illuminate\Support\Facades\Route;
+
+// PSGC location API (public, cached)
+Route::prefix('api/psgc')->group(function () {
+    Route::get('provinces',            [PsgcController::class, 'provinces']);
+    Route::get('cities/{provinceCode}',[PsgcController::class, 'cities']);
+    Route::get('barangays/{cityCode}', [PsgcController::class, 'barangays']);
+});
 
 // Public survey
 Route::get('/s/{token}',       [TakingController::class, 'show'])->name('survey.show');

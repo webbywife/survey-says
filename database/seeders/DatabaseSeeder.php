@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(PsgcSeeder::class);
+
         $admin = User::firstOrCreate(['email' => 'admin@surveysays.test'], [
             'name' => 'Admin', 'password' => Hash::make('Admin@1234!'),
             'role' => 'admin', 'is_active' => true,

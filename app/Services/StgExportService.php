@@ -29,6 +29,10 @@ class StgExportService
                         $dynamic[] = $question->variable_code . '_' . $row->row_code . '_' . $col->option_code;
                     }
                 }
+            } elseif ($question->isPHLocation()) {
+                $dynamic[] = $question->variable_code;
+                $dynamic[] = $question->variable_code . '_CITY';
+                $dynamic[] = $question->variable_code . '_BRGY';
             } else {
                 $dynamic[] = $question->variable_code;
             }
@@ -83,6 +87,11 @@ class StgExportService
                         $row[] = $cellsByRowCol[$key] ?? '';
                     }
                 }
+            } elseif ($question->isPHLocation()) {
+                $loc = $answer ? json_decode($answer->value_text ?? '{}', true) : [];
+                $row[] = $loc['province'] ?? '';
+                $row[] = $loc['city']     ?? '';
+                $row[] = $loc['barangay'] ?? '';
             } else {
                 $row[] = $answer?->value_text ?? '';
             }

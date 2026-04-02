@@ -357,9 +357,12 @@ function applyModeUI() {
   onlineBtn.innerHTML  = (!forced ? '&#9679;' : '&#9675;') + ' Online';
   offlineBtn.innerHTML = ( forced ? '&#9679;' : '&#9675;') + ' Offline';
   // Update submit button label and offline bar
+  const effectiveOffline = forced || !navigator.onLine;
   const btn = document.getElementById('submit-btn');
-  if (btn && !btn.disabled) btn.textContent = (forced || !navigator.onLine) ? 'Save Offline' : 'Submit Survey';
-  document.getElementById('offline-bar').classList.toggle('show', forced || !navigator.onLine);
+  if (btn && !btn.disabled) btn.textContent = effectiveOffline ? 'Save Offline' : 'Submit Survey';
+  document.getElementById('offline-bar').classList.toggle('show', effectiveOffline);
+  // Disable browser required-field validation when offline so our handler can run
+  document.getElementById('sf').noValidate = effectiveOffline;
 }
 
 function setCollectionMode(mode) {
@@ -441,6 +444,8 @@ function setOfflineUI(offline) {
   document.getElementById('offline-bar').classList.toggle('show', effectiveOffline);
   const btn = document.getElementById('submit-btn');
   if (btn && !btn.disabled) btn.textContent = effectiveOffline ? 'Save Offline' : 'Submit Survey';
+  // Disable browser required-field validation when offline so our handler can run
+  document.getElementById('sf').noValidate = effectiveOffline;
 }
 
 async function refreshSyncBar() {

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>You're Offline — SurveySays</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#550D0E">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Lato',Helvetica,sans-serif;background:#f5f5f7;min-height:100vh;display:flex;flex-direction:column}
+    .s-header{background:#550D0E;color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+    .s-seal{width:32px;height:32px;background:#C9A84C;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#550D0E;font-size:16px;flex-shrink:0}
+    .s-title{font-size:17px;font-weight:700}
+    .body{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+    .card{background:#fff;border-radius:12px;padding:40px 32px;text-align:center;max-width:420px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+    .icon{width:72px;height:72px;border-radius:50%;background:#fff3cd;display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+    h1{font-size:22px;font-weight:700;color:#222;margin-bottom:10px}
+    p{font-size:14px;color:#666;line-height:1.7;margin-bottom:6px}
+    .steps{text-align:left;background:#f8f8f8;border-radius:8px;padding:16px 20px;margin:20px 0;font-size:13px;color:#444;line-height:2}
+    .steps li{margin-left:16px}
+    .btn{display:inline-block;margin-top:8px;background:#7B1213;color:#fff;border:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;text-decoration:none}
+    .btn:hover{background:#550D0E}
+    #status{margin-top:14px;font-size:12px;color:#888;min-height:18px}
+    #status.online{color:#155724}
+  </style>
+</head>
+<body>
+<div class="s-header">
+  <div class="s-seal">S</div>
+  <div class="s-title">SurveySays</div>
+</div>
+<div class="body">
+  <div class="card">
+    <div class="icon">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2.2">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+      </svg>
+    </div>
+    <h1>You're Offline</h1>
+    <p>This survey page isn't available yet without an internet connection.</p>
+    <p>To use this survey offline, you need to open it <strong>once while connected</strong> first so it gets saved to your device.</p>
+    <div class="steps">
+      <ol>
+        <li>Connect to WiFi or mobile data</li>
+        <li>Open the survey link</li>
+        <li>You can then use it offline</li>
+      </ol>
+    </div>
+    <button class="btn" onclick="location.reload()">Try Again</button>
+    <div id="status"></div>
+  </div>
+</div>
+<script>
+  // Auto-reload when connection returns
+  window.addEventListener('online', () => {
+    document.getElementById('status').textContent = 'Connection restored — reloading…';
+    document.getElementById('status').className = 'online';
+    setTimeout(() => location.reload(), 800);
+  });
+  window.addEventListener('offline', () => {
+    document.getElementById('status').textContent = 'Still offline…';
+  });
+</script>
+</body>
+</html>

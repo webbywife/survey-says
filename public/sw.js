@@ -1,12 +1,13 @@
 const PSGC_CACHE   = 'ss-psgc-v2';
 const SURVEY_CACHE = 'ss-survey';   // no version — stable, never deleted
 
-// On install: pre-cache provinces
+// On install: pre-cache provinces + offline fallback page
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(PSGC_CACHE)
-      .then(c => c.add('/api/psgc/provinces'))
-      .catch(() => {})
+    Promise.all([
+      caches.open(PSGC_CACHE).then(c => c.add('/api/psgc/provinces')).catch(() => {}),
+      caches.open(SURVEY_CACHE).then(c => c.add('/offline.html')).catch(() => {}),
+    ])
   );
   self.skipWaiting();
 });
@@ -48,7 +49,7 @@ self.addEventListener('fetch', event => {
   }
 
   // Survey pages — cache-first, update in background (stale-while-revalidate)
-  // This ensures the page always loads offline after first online visit
+  // Falls back to /offline.html if page not cached and network unavailable
   if (url.pathname.match(/^\/s\/[^/]+(\/done)?\/?(\?.*)?$/)) {
     event.respondWith(
       caches.open(SURVEY_CACHE).then(cache =>
@@ -57,7 +58,7 @@ self.addEventListener('fetch', event => {
             if (res.ok) cache.put(event.request, res.clone());
             return res;
           }).catch(() => null);
-          return cached || fresh;
+          return cached || fresh || caches.match('/offline.html');
         })
       )
     );

@@ -20,10 +20,23 @@
       <div class="form-group"><label>From Date</label><input type="date" name="date_from"></div>
       <div class="form-group"><label>To Date</label><input type="date" name="date_to"></div>
     </div>
-    <div style="background:#fdf6e8;border:1px solid #e2c47a;border-radius:5px;padding:12px;font-size:13px;color:#7a5c00;margin-bottom:16px">
-      <strong>STG Compatible:</strong> This CSV matches Survey to Go's export format. Variable codes in column headers align with your STG project for direct merge.
+    <div class="form-group">
+      <label>Export Format</label>
+      <div style="display:flex;gap:12px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal">
+          <input type="radio" name="format" value="csv" checked>
+          <span>CSV <span style="color:#888;font-size:12px">(.csv)</span></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal">
+          <input type="radio" name="format" value="xlsx">
+          <span>Excel <span style="color:#888;font-size:12px">(.xlsx)</span></span>
+        </label>
+      </div>
     </div>
-    <button type="submit" class="btn btn-gold">⬇ Download STG-Compatible CSV</button>
+    <div style="background:#fdf6e8;border:1px solid #e2c47a;border-radius:5px;padding:12px;font-size:13px;color:#7a5c00;margin-bottom:16px">
+      <strong>STG Compatible:</strong> This export matches Survey to Go's format. Variable codes in column headers align with your STG project for direct merge.
+    </div>
+    <button type="submit" class="btn btn-gold">⬇ Download Export</button>
   </form>
 </div>
 

@@ -4,6 +4,11 @@ namespace App\Services;
 use App\Models\Survey;
 use App\Models\Response;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Font;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StgExportService
@@ -100,7 +105,7 @@ class StgExportService
         return $row;
     }
 
-    public function download(array $filters): StreamedResponse
+    public function download(array $filters, string $format = 'csv'): StreamedResponse
     {
         $filename = Str::slug($this->survey->title) . '_export_' . now()->format('Ymd_His');
 
@@ -112,9 +117,17 @@ class StgExportService
             ])
             ->when($filters['status'] ?? null, fn($q, $s) => $q->where('status', $s))
             ->when($filters['date_from'] ?? null, fn($q, $d) => $q->whereDate('started_at', '>=', $d))
-            ->when($filters['date_to'] ?? null, fn($q, $d) => $q->whereDate('started_at', '<=', $d))
-            ->cursor();
+            ->when($filters['date_to'] ?? null, fn($q, $d) => $q->whereDate('started_at', '<=', $d));
 
+        if ($format === 'xlsx') {
+            return $this->downloadXlsx($filename, $responses->cursor());
+        }
+
+        return $this->downloadCsv($filename, $responses->cursor());
+    }
+
+    private function downloadCsv(string $filename, iterable $responses): StreamedResponse
+    {
         $headers = $this->buildHeaders();
 
         return response()->streamDownload(function () use ($headers, $responses) {
@@ -127,6 +140,52 @@ class StgExportService
         }, $filename . '.csv', [
             'Content-Type'        => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '.csv"',
+        ]);
+    }
+
+    private function downloadXlsx(string $filename, iterable $responses): StreamedResponse
+    {
+        $headers = $this->buildHeaders();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Responses');
+
+        // Write header row
+        $sheet->fromArray($headers, null, 'A1');
+
+        // Style header row
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C9A84C']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ];
+        $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers));
+        $sheet->getStyle('A1:' . $lastCol . '1')->applyFromArray($headerStyle);
+
+        // Freeze header row
+        $sheet->freezePane('A2');
+
+        // Write data rows
+        $rowNum = 2;
+        foreach ($responses as $response) {
+            $sheet->fromArray($this->buildRow($response), null, 'A' . $rowNum);
+            $rowNum++;
+        }
+
+        // Auto-size first 10 fixed columns
+        foreach (range(1, min(10, count($headers))) as $colIndex) {
+            $sheet->getColumnDimensionByColumn($colIndex)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename . '.xlsx', [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '.xlsx"',
+            'Cache-Control'       => 'max-age=0',
         ]);
     }
 }

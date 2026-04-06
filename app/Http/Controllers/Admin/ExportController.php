@@ -25,9 +25,11 @@ class ExportController extends Controller
             'status'    => 'nullable|in:1,2',
             'date_from' => 'nullable|date',
             'date_to'   => 'nullable|date',
+            'format'    => 'nullable|in:csv,xlsx',
         ]);
+        $format = $filters['format'] ?? 'csv';
         $service = new StgExportService($survey);
-        return $service->download($filters);
+        return $service->download($filters, $format);
     }
 
     private function authorize(Survey $survey): void

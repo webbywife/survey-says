@@ -16,7 +16,11 @@
 .opt-code{font-family:monospace;font-size:11px;background:#f5f5f5;padding:1px 5px;border-radius:3px}
 .add-row{display:flex;gap:6px;margin-top:8px}
 .add-row input{flex:1;padding:6px 9px;border:1px solid #ddd;border-radius:4px;font-size:12px}
-.section-divider{background:var(--maroon-d);color:#fff;padding:8px 14px;border-radius:5px;margin:16px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.section-divider{background:var(--maroon-d);color:#fff;padding:8px 14px;border-radius:5px;margin:16px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between}
+.section-divider button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:3px;padding:2px 8px;font-size:10px;cursor:pointer;letter-spacing:0;text-transform:none}
+.section-divider button:hover{background:rgba(255,255,255,.3)}
+.add-section-bar{border:2px dashed #C9A84C;border-radius:5px;padding:10px 14px;text-align:center;margin-bottom:10px;color:#C9A84C;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.add-section-bar:hover{background:#fdf6e8}
 </style>
 @endpush
 @section('content')
@@ -31,12 +35,21 @@
 
 <div class="builder-wrap">
   <div>
+    <div class="add-section-bar" onclick="addSectionPrompt()">+ Add Section Divider</div>
     <div id="q-list">
     @php $lastSecId = null; @endphp
     @forelse($survey->questions as $q)
       @if($q->section_id && $q->section_id !== $lastSecId)
         @php $lastSecId = $q->section_id; $sec = $survey->sections->firstWhere('id',$q->section_id); @endphp
-        @if($sec)<div class="section-divider">{{ $sec->title }}</div>@endif
+        @if($sec)
+        <div class="section-divider" id="sec-{{ $sec->id }}">
+          <span>{{ $sec->title }}@if($sec->description) — <span style="font-weight:400;opacity:.8">{{ $sec->description }}</span>@endif</span>
+          <div style="display:flex;gap:4px">
+            <button onclick="editSection({{ $sec->id }},'{{ addslashes($sec->title) }}','{{ addslashes($sec->description ?? '') }}')">Edit</button>
+            <button onclick="deleteSection({{ $sec->id }})">Delete</button>
+          </div>
+        </div>
+        @endif
       @endif
       <div class="q-item" data-id="{{ $q->id }}">
         <div class="q-drag">⣿</div>
@@ -89,6 +102,15 @@
         <label>Required?</label>
         <select id="f-req"><option value="1">Yes</option><option value="0">No</option></select>
       </div>
+    </div>
+    <div class="form-group">
+      <label>Section</label>
+      <select id="f-section">
+        <option value="">— No section —</option>
+        @foreach($survey->sections as $sec)
+          <option value="{{ $sec->id }}">{{ $sec->title }}</option>
+        @endforeach
+      </select>
     </div>
     <div class="form-group">
       <label>Help Text</label>
@@ -144,6 +166,7 @@ $allQData = $survey->questions->map(function($q) {
         'type'          => $q->type,
         'is_required'   => $q->is_required,
         'help_text'     => $q->help_text,
+        'section_id'    => $q->section_id,
         'options'       => $q->options->map(function($o) {
             return ['id' => $o->id, 'option_code' => $o->option_code, 'label' => $o->label];
         })->values(),
@@ -210,6 +233,7 @@ function editQ(id){
   document.getElementById('f-type').value=q.type;
   document.getElementById('f-req').value=q.is_required?'1':'0';
   document.getElementById('f-help').value=q.help_text||'';
+  document.getElementById('f-section').value=q.section_id||'';
   document.getElementById('save-btn').textContent='Save Changes';
   onType();renderOpts();renderRows();
 }
@@ -219,7 +243,8 @@ async function saveQ(){
   const type=document.getElementById('f-type').value,req=document.getElementById('f-req').value==='1';
   const help=document.getElementById('f-help').value.trim();
   if(!code||!label){showErr('Variable code and label are required.');return;}
-  const payload={variable_code:code,label,type,is_required:req,help_text:help};
+  const sectionId=document.getElementById('f-section').value||null;
+  const payload={variable_code:code,label,type,is_required:req,help_text:help,section_id:sectionId};
   try{
     if(editId){
       await api(`/admin/surveys/${SID}/questions/${editId}`,'PUT',payload);
@@ -244,11 +269,34 @@ function reset(){
   ['f-code','f-label','f-help'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-type').value='single_choice';
   document.getElementById('f-req').value='1';
+  document.getElementById('f-section').value='';
   document.getElementById('save-btn').textContent='Save Question';
   document.getElementById('f-err').style.display='none';
   document.getElementById('opts-list').innerHTML='';
   document.getElementById('rows-list').innerHTML='';
   onType();
+}
+
+async function addSectionPrompt(){
+  const title=prompt('Section title:');
+  if(!title)return;
+  const desc=prompt('Section description (optional):') || '';
+  await api(`/admin/surveys/${SID}/sections`,'POST',{title,description:desc});
+  location.reload();
+}
+
+async function editSection(id,title,desc){
+  const newTitle=prompt('Section title:',title);
+  if(!newTitle)return;
+  const newDesc=prompt('Section description (optional):',desc) || '';
+  await api(`/admin/surveys/${SID}/sections/${id}`,'PUT',{title:newTitle,description:newDesc});
+  location.reload();
+}
+
+async function deleteSection(id){
+  if(!confirm('Delete this section? Questions inside will be unassigned but not deleted.'))return;
+  await api(`/admin/surveys/${SID}/sections/${id}`,'DELETE');
+  location.reload();
 }
 
 async function api(url,method,body){

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Survey\TakingController;
 use App\Http\Controllers\Survey\SyncController;
 use App\Http\Controllers\Api\PsgcController;
@@ -57,6 +58,9 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
         Route::put('questions/{question}',                    [QuestionController::class, 'update'])->name('questions.update');
         Route::delete('questions/{question}',                 [QuestionController::class, 'destroy'])->name('questions.destroy');
         Route::post('questions/reorder',                      [QuestionController::class, 'reorder'])->name('questions.reorder');
+        Route::post('sections',                               [SectionController::class, 'store'])->name('sections.store');
+        Route::put('sections/{section}',                      [SectionController::class, 'update'])->name('sections.update');
+        Route::delete('sections/{section}',                   [SectionController::class, 'destroy'])->name('sections.destroy');
         Route::post('questions/{question}/options',           [QuestionController::class, 'storeOption'])->name('questions.options.store');
         Route::put('questions/{question}/options/{option}',   [QuestionController::class, 'updateOption'])->name('questions.options.update');
         Route::delete('questions/{question}/options/{option}',[QuestionController::class, 'destroyOption'])->name('questions.options.destroy');

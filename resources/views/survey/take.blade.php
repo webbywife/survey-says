@@ -96,9 +96,22 @@
         {{ $errors->first() }}
       </div>
     @endif
-    @php $qNum = 0; @endphp
+    @php $qNum = 0; $lastSectionId = null; @endphp
     @foreach($questions as $q)
       @php $qNum++; $existing = $existingAnswers[$q->id] ?? null; @endphp
+      @if($q->section_id && $q->section_id !== $lastSectionId)
+        @php $lastSectionId = $q->section_id; $sec = $survey->sections->firstWhere('id', $q->section_id); @endphp
+        @if($sec)
+          <div style="margin:28px 0 10px">
+            <div style="background:#550D0E;color:#fff;padding:10px 18px;border-radius:7px;font-family:'Playfair Display',serif;font-size:15px;font-weight:700;letter-spacing:.02em">
+              {{ $sec->title }}
+            </div>
+            @if($sec->description)
+              <div style="font-size:12px;color:#888;margin-top:5px;padding:0 4px;font-style:italic">{{ $sec->description }}</div>
+            @endif
+          </div>
+        @endif
+      @endif
       <div class="q-card" id="qc-{{ $q->id }}" data-qid="{{ $q->id }}">
         <div class="q-num">Q{{ $qNum }}@if($q->is_required) <span style="color:#dc3545">*</span>@endif</div>
         <div class="q-text">{!! nl2br(e($q->label)) !!}</div>

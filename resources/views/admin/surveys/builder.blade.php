@@ -32,7 +32,12 @@
 <div class="builder-wrap">
   <div>
     <div id="q-list">
+    @php $lastSecId = null; @endphp
     @forelse($survey->questions as $q)
+      @if($q->section_id && $q->section_id !== $lastSecId)
+        @php $lastSecId = $q->section_id; $sec = $survey->sections->firstWhere('id',$q->section_id); @endphp
+        @if($sec)<div class="section-divider">{{ $sec->title }}</div>@endif
+      @endif
       <div class="q-item" data-id="{{ $q->id }}">
         <div class="q-drag">⣿</div>
         <div class="q-body">

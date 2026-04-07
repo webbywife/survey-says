@@ -63,7 +63,21 @@ class SurveyController extends Controller
     public function builder(Survey $survey)
     {
         $this->authorize($survey);
-        $survey->load(['sections.questions.options', 'sections.questions.gridRows', 'questions.options', 'questions.gridRows', 'skipRules']);
+        $survey->load([
+            'sections' => fn($q) => $q->orderBy('sort_order'),
+            'questions.options',
+            'questions.gridRows',
+            'skipRules',
+        ]);
+
+        // Sort questions: by section sort_order first, then question sort_order
+        $sectionOrder = $survey->sections->pluck('sort_order', 'id');
+        $sorted = $survey->questions->sortBy(function ($q) use ($sectionOrder) {
+            $sec = $q->section_id ? ($sectionOrder[$q->section_id] ?? 9999) : 9999;
+            return sprintf('%05d_%05d', $sec, $q->sort_order);
+        })->values();
+        $survey->setRelation('questions', $sorted);
+
         return view('admin.surveys.builder', compact('survey'));
     }
 

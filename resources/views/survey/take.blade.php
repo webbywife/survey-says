@@ -70,6 +70,11 @@
   <span id="sync-status"></span>
 </div>
 
+@if(!empty($survey->logo_url))
+<div style="background:#fff;border-bottom:1px solid #e8e8e8;padding:14px 20px;text-align:center">
+  <img src="{{ $survey->logo_url }}" alt="{{ $survey->title }}" style="max-height:72px;max-width:100%;object-fit:contain">
+</div>
+@endif
 <div class="s-header">
   <div class="inner">
     <div class="s-seal">S</div>

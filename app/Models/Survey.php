@@ -13,7 +13,7 @@ class Survey extends Model
 
     protected $fillable = [
         'user_id', 'title', 'description', 'status', 'public_token',
-        'starts_at', 'ends_at', 'allow_partial_save', 'show_progress_bar',
+        'starts_at', 'ends_at', 'allow_partial_save', 'show_progress_bar', 'logo_url',
     ];
 
     protected $casts = [

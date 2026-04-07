@@ -137,7 +137,7 @@ class SurveyController extends Controller
 
     private function validated(Request $request, ?int $ignoreId = null): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title'              => 'required|string|max:255',
             'description'        => 'nullable|string',
             'status'             => 'required|in:draft,active,closed',
@@ -145,6 +145,16 @@ class SurveyController extends Controller
             'ends_at'            => 'nullable|date|after_or_equal:starts_at',
             'allow_partial_save' => 'nullable|boolean',
             'show_progress_bar'  => 'nullable|boolean',
+            'logo_file'          => 'nullable|image|max:2048',
+            'logo_url'           => 'nullable|string|max:500',
         ]);
+
+        if ($request->hasFile('logo_file')) {
+            $path = $request->file('logo_file')->store('logos', 'public');
+            $data['logo_url'] = '/storage/' . $path;
+        }
+        unset($data['logo_file']);
+
+        return $data;
     }
 }

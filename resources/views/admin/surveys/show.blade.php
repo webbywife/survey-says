@@ -5,10 +5,24 @@
   <a href="{{ route('admin.surveys.edit', $survey) }}" class="btn btn-secondary">Edit</a>
 @endsection
 @section('content')
+@php
+  $total = $survey->responses_count;
+  $pct   = $total > 0 ? round($completeCount / $total * 100) : 0;
+@endphp
 <div class="stats-row">
-  <div class="stat-card"><div class="stat-label">Total Responses</div><div class="stat-value">{{ $survey->responses_count }}</div></div>
+  <div class="stat-card"><div class="stat-label">Total Responses</div><div class="stat-value">{{ $total }}</div></div>
   <div class="stat-card"><div class="stat-label">Complete</div><div class="stat-value" style="color:#155724">{{ $completeCount }}</div></div>
   <div class="stat-card"><div class="stat-label">Partial</div><div class="stat-value" style="color:#856404">{{ $partialCount }}</div></div>
+  <div class="stat-card">
+    <div class="stat-label">Completion Rate</div>
+    <div class="stat-value" style="font-size:22px;padding-top:4px">@if($total > 0){{ $pct }}%@else—@endif</div>
+    @if($total > 0)
+      <div style="background:#e8e8e8;border-radius:99px;height:6px;margin-top:8px">
+        <div style="background:#155724;height:6px;border-radius:99px;width:{{ $pct }}%;transition:width .4s"></div>
+      </div>
+      <div style="font-size:11px;color:#aaa;margin-top:4px">{{ $completeCount }} of {{ $total }} complete</div>
+    @endif
+  </div>
   <div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" style="font-size:16px;padding-top:6px"><span class="badge badge-{{ $survey->status }}">{{ ucfirst($survey->status) }}</span></div></div>
 </div>
 

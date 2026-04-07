@@ -13,8 +13,9 @@
     .s-header .inner{max-width:740px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:12px}
     .s-seal{width:32px;height:32px;background:#C9A84C;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;color:#550D0E;flex-shrink:0}
     .s-title{font-family:'Playfair Display',serif;font-size:17px}
-    .prog-wrap{background:#e0e0e0;height:4px}
-    .prog-bar{background:#C9A84C;height:4px;transition:width .3s}
+    .prog-wrap{background:#e0e0e0;height:6px}
+    .prog-bar{background:#C9A84C;height:6px;transition:width .4s}
+    .prog-info{max-width:740px;margin:6px auto 0;padding:0 20px;display:flex;justify-content:space-between;font-size:11px;color:#999;letter-spacing:.03em}
     .s-body{max-width:740px;margin:28px auto;padding:0 20px}
     .q-card{background:#fff;border-radius:8px;padding:24px 28px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px}
     .q-num{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#C9A84C;margin-bottom:5px}
@@ -86,6 +87,7 @@
 </div>
 @if($survey->show_progress_bar)
 <div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div>
+<div class="prog-info"><span id="prog-answered"></span><span id="prog-pct"></span></div>
 @endif
 
 <div class="s-body">
@@ -560,6 +562,17 @@ function getAnswer(qId){
   return ta?[ta.value]:[];
 }
 
+function isAnswered(card){
+  const qid=card.dataset.qid;
+  const radios=card.querySelectorAll(`input[name="q_${qid}"]:checked`);
+  if(radios.length)return true;
+  const checks=card.querySelectorAll(`input[type=checkbox][name^="q_${qid}"]:checked`);
+  if(checks.length)return true;
+  const txt=card.querySelector(`input[type=text],input[type=number],input[type=date],input[type=time],textarea`);
+  if(txt&&txt.value.trim())return true;
+  return false;
+}
+
 function applySkip(){
   const hidden=new Set();
   for(const rule of skipRules){
@@ -591,7 +604,15 @@ function applySkip(){
     if(!hide)vis++;
   });
   const p=document.getElementById('prog');
-  if(p) p.style.width=(vis/allCards.length*100)+'%';
+  if(p){
+    const pct=Math.round(vis/allCards.length*100);
+    p.style.width=pct+'%';
+    const answered=Array.from(allCards).filter(c=>!c.classList.contains('skip-hide')&&isAnswered(c)).length;
+    const el1=document.getElementById('prog-answered');
+    const el2=document.getElementById('prog-pct');
+    if(el1) el1.textContent=answered+' of '+vis+' answered';
+    if(el2) el2.textContent=pct+'% complete';
+  }
 }
 
 function selRating(btn){
@@ -602,6 +623,7 @@ function selRating(btn){
 }
 
 document.querySelectorAll('input[type=radio],input[type=checkbox]').forEach(el=>el.addEventListener('change',applySkip));
+document.querySelectorAll('input[type=text],input[type=number],input[type=date],input[type=time],textarea').forEach(el=>el.addEventListener('input',applySkip));
 applySkip();
 
 // ─── Online/offline event listeners ──────────────────────────────────────────

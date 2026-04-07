@@ -13,7 +13,10 @@ class SurveyController extends Controller
     {
         $user  = auth()->user();
         $query = $user->isAdmin() ? Survey::withTrashed() : Survey::ownedBy($user->id);
-        $surveys = $query->withCount('responses')->with('user')->latest()->paginate(20);
+        $surveys = $query
+            ->withCount('responses')
+            ->withCount(['responses as complete_count' => fn($q) => $q->where('is_complete', true)])
+            ->with('user')->latest()->paginate(20);
         return view('admin.surveys.index', compact('surveys'));
     }
 

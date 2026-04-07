@@ -309,5 +309,25 @@ function showErr(m){const e=document.getElementById('f-err');e.textContent=m;e.s
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 onType();
+
+// ── Drag-and-drop reorder ─────────────────────────────────────────────────
+const sortScript = document.createElement('script');
+sortScript.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js';
+sortScript.onload = function() {
+  Sortable.create(document.getElementById('q-list'), {
+    handle: '.q-drag',
+    animation: 150,
+    ghostClass: 'q-drag-ghost',
+    onEnd: async function() {
+      const ids = Array.from(document.querySelectorAll('#q-list .q-item[data-id]'))
+                       .map(el => parseInt(el.dataset.id));
+      try {
+        await api(`/admin/surveys/${SID}/questions/reorder`, 'POST', { ids });
+      } catch(e) {}
+    }
+  });
+};
+document.head.appendChild(sortScript);
 </script>
+<style>#q-list .q-drag-ghost{opacity:.4;background:#fdf6e8;border-color:#C9A84C}</style>
 @endsection

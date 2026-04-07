@@ -91,6 +91,10 @@
 @endif
 
 <div class="s-body">
+  <div style="background:#fff8e1;border-left:4px solid #C9A84C;border-radius:0 6px 6px 0;padding:12px 16px;margin-bottom:20px;font-size:13px;color:#555;line-height:1.55">
+    <strong style="color:#333;display:block;margin-bottom:3px">CONFIDENTIALITY</strong>
+    All information obtained in this form is held strictly confidential and cannot be used for taxation, investigation, or law enforcement purposes (RA 10625).
+  </div>
   <form method="POST" action="{{ route('survey.submit', $survey->public_token) }}" id="sf">
     @csrf
     @if($errors->any())

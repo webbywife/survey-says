@@ -45,12 +45,8 @@ class TakingController extends Controller
             }
         }
 
-        // Order questions by section sort_order first, then question sort_order
-        $sectionOrder = $survey->sections->pluck('sort_order', 'id');
-        $questions = $survey->questions->sortBy(function ($q) use ($sectionOrder) {
-            $sec = $q->section_id ? ($sectionOrder[$q->section_id] ?? 9999) : 9999;
-            return sprintf('%05d_%05d', $sec, $q->sort_order);
-        })->values();
+        // Order questions by their own sort_order only — sections affect display headers, not question order
+        $questions = $survey->questions->sortBy('sort_order')->values();
 
         $skipRulesJson = $survey->skipRules->map(fn($r) => [
             'source' => $r->source_question_id,

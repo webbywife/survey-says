@@ -13,15 +13,19 @@ class DashboardController extends Controller
         $user  = auth()->user();
         $query = $user->isAdmin() ? Survey::query() : Survey::ownedBy($user->id);
 
-        $surveyIds     = (clone $query)->pluck('id');
-        $totalSurveys  = (clone $query)->count();
-        $activeSurveys = (clone $query)->where('status', 'active')->count();
-        $totalResponses = Response::whereIn('survey_id', $surveyIds)->count();
-        $recentSurveys = (clone $query)->latest()->limit(5)->with('user')->get();
-        $totalUsers    = $user->isAdmin() ? User::count() : null;
+        $surveyIds         = (clone $query)->pluck('id');
+        $totalSurveys      = (clone $query)->count();
+        $activeSurveys     = (clone $query)->where('status', 'active')->count();
+        $totalResponses    = Response::whereIn('survey_id', $surveyIds)->count();
+        $completeResponses = Response::whereIn('survey_id', $surveyIds)->where('is_complete', true)->count();
+        $recentSurveys     = (clone $query)->latest()->limit(5)
+            ->withCount('responses')
+            ->withCount(['responses as complete_count' => fn($q) => $q->where('is_complete', true)])
+            ->with('user')->get();
+        $totalUsers = $user->isAdmin() ? User::count() : null;
 
         return view('admin.dashboard', compact(
-            'totalSurveys', 'activeSurveys', 'totalResponses', 'recentSurveys', 'totalUsers'
+            'totalSurveys', 'activeSurveys', 'totalResponses', 'completeResponses', 'recentSurveys', 'totalUsers'
         ));
     }
 }

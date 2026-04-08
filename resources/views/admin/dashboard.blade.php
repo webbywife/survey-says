@@ -17,6 +17,13 @@
     <div class="stat-label">Total Responses</div>
     <div class="stat-value">{{ $totalResponses }}</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-label">Completion Rate</div>
+    <div class="stat-value" style="font-size:22px;padding-top:4px">
+      @if($totalResponses > 0){{ round($completeResponses / $totalResponses * 100) }}%@else—@endif
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-top:2px">{{ $completeResponses }} of {{ $totalResponses }} complete</div>
+  </div>
   @if($totalUsers !== null)
   <div class="stat-card">
     <div class="stat-label">Users</div>

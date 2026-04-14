@@ -21,6 +21,11 @@
 .section-divider button:hover{background:rgba(255,255,255,.3)}
 .add-section-bar{border:2px dashed #C9A84C;border-radius:5px;padding:10px 14px;text-align:center;margin-bottom:10px;color:#C9A84C;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
 .add-section-bar:hover{background:#fdf6e8}
+.req-toggle{border:none;border-radius:3px;font-size:10px;padding:2px 7px;margin-left:8px;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:.03em;transition:background .15s,color .15s}
+.req-on{background:#fde8e8;color:#dc3545}
+.req-off{background:#f0f0f0;color:#aaa}
+.req-toggle:hover.req-on{background:#f8c0c0}
+.req-toggle:hover.req-off{background:#e0e0e0}
 </style>
 @endpush
 @section('content')
@@ -54,7 +59,7 @@
       <div class="q-item" data-id="{{ $q->id }}">
         <div class="q-drag">⣿</div>
         <div class="q-body">
-          <div><span class="q-code">{{ $q->variable_code }}</span> <span class="q-type" style="margin-left:8px">{{ str_replace('_',' ',$q->type) }}</span>@if($q->is_required)<span style="color:#dc3545;font-size:11px;margin-left:6px">req</span>@endif</div>
+          <div><span class="q-code">{{ $q->variable_code }}</span> <span class="q-type" style="margin-left:8px">{{ str_replace('_',' ',$q->type) }}</span><button id="req-btn-{{ $q->id }}" onclick="toggleRequired({{ $q->id }},this)" class="req-toggle {{ $q->is_required ? 'req-on' : 'req-off' }}" title="Toggle required">{{ $q->is_required ? '★ required' : '☆ optional' }}</button></div>
           <div class="q-label">{{ Str::limit($q->label,80) }}</div>
           @if($q->isChoiceType()||$q->isGrid())<div style="font-size:11px;color:#aaa">{{ $q->options->count() }} option(s){{ $q->isGrid()?'·'.$q->gridRows->count().' row(s)':'' }}</div>@endif
         </div>
@@ -306,6 +311,27 @@ async function api(url,method,body){
 }
 
 function showErr(m){const e=document.getElementById('f-err');e.textContent=m;e.style.display='';}
+
+async function toggleRequired(id, btn) {
+  const isReq = btn.classList.contains('req-on');
+  const newVal = !isReq;
+  const q = allQ.find(x => x.id === id);
+  if (!q) return;
+  try {
+    await api(`/admin/surveys/${SID}/questions/${id}`, 'PUT', {
+      variable_code: q.variable_code,
+      label:         q.label,
+      type:          q.type,
+      is_required:   newVal,
+      help_text:     q.help_text || '',
+      section_id:    q.section_id || null,
+    });
+    q.is_required = newVal;
+    btn.classList.toggle('req-on',  newVal);
+    btn.classList.toggle('req-off', !newVal);
+    btn.textContent = newVal ? '★ required' : '☆ optional';
+  } catch(e) {}
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 onType();

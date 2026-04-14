@@ -107,7 +107,17 @@
         {{ $errors->first() }}
       </div>
     @endif
-    @php $qNum = 0; $lastSectionId = null; @endphp
+    @php
+      $qNum = 0; $lastSectionId = null;
+      $hasNamePlaceholder = $questions->contains(fn($q) => str_contains($q->label, '[NAME]'));
+      $nameSourceId = null;
+      if ($hasNamePlaceholder) {
+        $firstPlaceholderPos = $questions->search(fn($q) => str_contains($q->label, '[NAME]'));
+        $nameSourceId = $questions->take($firstPlaceholderPos)
+          ->filter(fn($q) => stripos($q->label, 'NAME') !== false)
+          ->last()?->id;
+      }
+    @endphp
     @foreach($questions as $q)
       @php $qNum++; $existing = $existingAnswers[$q->id] ?? null; @endphp
       @if($q->section_id && $q->section_id !== $lastSectionId)
@@ -125,7 +135,7 @@
       @endif
       <div class="q-card" id="qc-{{ $q->id }}" data-qid="{{ $q->id }}">
         <div class="q-num">Q{{ $qNum }}@if($q->is_required) <span style="color:#dc3545">*</span>@endif</div>
-        <div class="q-text">{!! nl2br(e($q->label)) !!}</div>
+        <div class="q-text"@if(str_contains($q->label, '[NAME]')) data-tpl="{{ $q->label }}"@endif>{!! nl2br(e($q->label)) !!}</div>
         @if($q->help_text)<div class="q-help">{{ $q->help_text }}</div>@endif
 
         @if($q->type==='single_choice')
@@ -640,6 +650,27 @@ window.addEventListener('online',  () => { setOfflineUI(false); if (!isForceOffl
 window.addEventListener('offline', () => setOfflineUI(true));
 applyModeUI();
 refreshSyncBar();
+
+// ─── [NAME] substitution ─────────────────────────────────────────────────────
+@if($nameSourceId)
+(function(){
+  const nameInput = document.querySelector('[name="q_{{ $nameSourceId }}"]');
+  if (!nameInput) return;
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function applyName(){
+    const name = nameInput.value.trim();
+    const display = name
+      ? '<strong style="color:#550D0E">' + esc(name) + '</strong>'
+      : '<span style="color:#aaa;font-style:italic">[NAME]</span>';
+    document.querySelectorAll('.q-text[data-tpl]').forEach(el => {
+      const tpl = el.getAttribute('data-tpl');
+      el.innerHTML = esc(tpl).replace(/\[NAME\]/g, display).replace(/\n/g, '<br>');
+    });
+  }
+  nameInput.addEventListener('input', applyName);
+  applyName();
+})();
+@endif
 
 // ─── Register Service Worker ──────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {

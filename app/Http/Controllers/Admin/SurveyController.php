@@ -15,7 +15,7 @@ class SurveyController extends Controller
         $query = $user->isAdmin() ? Survey::withTrashed() : Survey::ownedBy($user->id);
         $surveys = $query
             ->withCount('responses')
-            ->withCount(['responses as complete_count' => fn($q) => $q->where('is_complete', true)])
+            ->withCount(['responses as complete_count' => fn($q) => $q->where('status', 1)])
             ->with('user')->latest()->paginate(20);
         return view('admin.surveys.index', compact('surveys'));
     }

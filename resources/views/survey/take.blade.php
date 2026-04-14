@@ -171,9 +171,16 @@
 
         @elseif($q->type==='number')
           @php $cfg=$q->config??[]; @endphp
-          <input type="number" name="q_{{ $q->id }}" style="max-width:200px;margin-top:12px"
+          <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <input type="number" name="q_{{ $q->id }}" style="max-width:200px"
             min="{{ $cfg['min']??'' }}" max="{{ $cfg['max']??'' }}"
-            value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}>
+            value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}
+            oninput="clampNumber(this)">
+          @if(isset($cfg['min']) || isset($cfg['max']))
+            <span class="num-range-hint" style="font-size:11px;color:#aaa">{{ isset($cfg['min']) ? $cfg['min'] : '' }}–{{ isset($cfg['max']) ? $cfg['max'] : '' }}</span>
+          @endif
+          </div>
+          <div class="num-err" id="nerr-{{ $q->id }}" style="display:none;font-size:12px;color:#dc3545;margin-top:4px"></div>
 
         @elseif($q->type==='date')
           <input type="date" name="q_{{ $q->id }}" style="max-width:220px;margin-top:12px"
@@ -650,6 +657,30 @@ window.addEventListener('online',  () => { setOfflineUI(false); if (!isForceOffl
 window.addEventListener('offline', () => setOfflineUI(true));
 applyModeUI();
 refreshSyncBar();
+
+// ─── Number clamp (enforces min/max regardless of online/offline mode) ───────
+function clampNumber(el) {
+  const min = el.min !== '' ? parseFloat(el.min) : null;
+  const max = el.max !== '' ? parseFloat(el.max) : null;
+  const val = parseFloat(el.value);
+  const errEl = document.getElementById('nerr-' + el.name.replace('q_',''));
+  if (!isNaN(val)) {
+    if (max !== null && val > max) {
+      el.value = max;
+      el.style.borderColor = '#dc3545';
+      if (errEl) { errEl.textContent = 'Maximum value is ' + max + '. Corrected automatically.'; errEl.style.display = ''; }
+      setTimeout(() => { el.style.borderColor = ''; if (errEl) errEl.style.display = 'none'; }, 2500);
+    } else if (min !== null && val < min) {
+      el.value = min;
+      el.style.borderColor = '#dc3545';
+      if (errEl) { errEl.textContent = 'Minimum value is ' + min + '. Corrected automatically.'; errEl.style.display = ''; }
+      setTimeout(() => { el.style.borderColor = ''; if (errEl) errEl.style.display = 'none'; }, 2500);
+    } else {
+      el.style.borderColor = '';
+      if (errEl) errEl.style.display = 'none';
+    }
+  }
+}
 
 // ─── [NAME] substitution ─────────────────────────────────────────────────────
 @if($nameSourceId)

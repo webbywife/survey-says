@@ -17,10 +17,10 @@ class DashboardController extends Controller
         $totalSurveys      = (clone $query)->count();
         $activeSurveys     = (clone $query)->where('status', 'active')->count();
         $totalResponses    = Response::whereIn('survey_id', $surveyIds)->count();
-        $completeResponses = Response::whereIn('survey_id', $surveyIds)->where('is_complete', true)->count();
+        $completeResponses = Response::whereIn('survey_id', $surveyIds)->where('status', 1)->count();
         $recentSurveys     = (clone $query)->latest()->limit(5)
             ->withCount('responses')
-            ->withCount(['responses as complete_count' => fn($q) => $q->where('is_complete', true)])
+            ->withCount(['responses as complete_count' => fn($q) => $q->where('status', 1)])
             ->with('user')->get();
         $totalUsers = $user->isAdmin() ? User::count() : null;
 

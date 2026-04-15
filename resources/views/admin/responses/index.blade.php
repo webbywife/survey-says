@@ -22,6 +22,9 @@
           <td style="color:#aaa;font-size:12px">{{ $r->ip_address ?? '—' }}</td>
           <td>
             <a href="{{ route('admin.surveys.responses.show', [$survey, $r]) }}" class="btn btn-secondary btn-sm">View</a>
+            @if(auth()->user()->canEditResponses())
+            <a href="{{ route('admin.surveys.responses.edit', [$survey, $r]) }}" class="btn btn-primary btn-sm">Edit</a>
+            @endif
             @if(auth()->user()->isAdmin())
             <form action="{{ route('admin.surveys.responses.destroy', [$survey, $r]) }}" method="POST" style="display:inline">
               @csrf @method('DELETE')

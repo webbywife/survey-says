@@ -1,6 +1,9 @@
 @extends('layouts.admin')
 @section('title', 'Response — ' . $response->serial)
 @section('topbar-actions')
+  @if(auth()->user()->canEditResponses())
+    <a href="{{ route('admin.surveys.responses.edit', [$survey, $response]) }}" class="btn btn-primary btn-sm">Edit Response</a>
+  @endif
   <a href="{{ route('admin.surveys.responses.index', $survey) }}" class="btn btn-secondary btn-sm">← All Responses</a>
 @endsection
 @section('content')

@@ -56,7 +56,7 @@ class UserController extends Controller
             'name'      => 'required|string|max:150',
             'email'     => 'required|email|unique:users,email,' . $ignoreId,
             'password'  => ($passwordRequired ? 'required' : 'nullable') . '|min:8|confirmed',
-            'role'      => 'required|in:admin,researcher',
+            'role'      => 'required|in:admin,researcher,interviewer,supervisor',
             'is_active' => 'nullable|boolean',
         ]);
     }

@@ -86,8 +86,10 @@
     .badge-closed   { background: #f8d7da; color: #721c24; }
     .badge-complete { background: #d4edda; color: #155724; }
     .badge-partial  { background: #fff3cd; color: #856404; }
-    .badge-admin    { background: #f0e6ff; color: #5a2d91; }
-    .badge-researcher { background: #e6f3ff; color: #1a5f9e; }
+    .badge-admin        { background: #f0e6ff; color: #5a2d91; }
+    .badge-researcher   { background: #e6f3ff; color: #1a5f9e; }
+    .badge-interviewer  { background: #e6f9f0; color: #1a7a4a; }
+    .badge-supervisor   { background: #fff3e6; color: #a05a00; }
 
     /* Forms */
     .form-group { margin-bottom: 18px; }

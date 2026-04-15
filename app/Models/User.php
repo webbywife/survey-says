@@ -21,8 +21,15 @@ class User extends Authenticatable
         'password'          => 'hashed',
     ];
 
-    public function isAdmin(): bool      { return $this->role === 'admin'; }
-    public function isResearcher(): bool { return $this->role === 'researcher'; }
+    public function isAdmin(): bool        { return $this->role === 'admin'; }
+    public function isResearcher(): bool   { return $this->role === 'researcher'; }
+    public function isInterviewer(): bool  { return $this->role === 'interviewer'; }
+    public function isSupervisor(): bool   { return $this->role === 'supervisor'; }
+
+    public function canEditResponses(): bool
+    {
+        return in_array($this->role, ['admin', 'researcher', 'interviewer', 'supervisor']);
+    }
 
     public function surveys(): HasMany { return $this->hasMany(Survey::class); }
     public function importJobs(): HasMany { return $this->hasMany(ImportJob::class); }

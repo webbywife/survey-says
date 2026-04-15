@@ -759,6 +759,22 @@ if ('serviceWorker' in navigator) {
     if (measure.getDate() < birth.getDate()) m--;
     return m;
   }
+  // Safely subtract months from a date (handles month-end edge cases)
+  function dateMinusMonths(refDate, months) {
+    const d = new Date(refDate);
+    const targetMonth = d.getMonth() - months;
+    d.setDate(1);
+    d.setMonth(targetMonth);
+    // clamp to last valid day of that month
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(refDate.getDate(), lastDay));
+    return d.toISOString().split('T')[0];
+  }
+  function dateMinusYears(refDate, years) {
+    const d = new Date(refDate);
+    d.setFullYear(d.getFullYear() - years);
+    return d.toISOString().split('T')[0];
+  }
   function setFieldError(el, msg) {
     const errEl = document.getElementById('nerr-' + el.name.replace('q_', ''));
     el.style.borderColor = '#dc3545';
@@ -770,58 +786,94 @@ if ('serviceWorker' in navigator) {
     if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
   }
 
+  // Update birthdate min/max based on selected category and measurement date
+  function updateBirthdateConstraints() {
+    const birthdateEl = getDateEl('Q12_BIRTHDATE');
+    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
+    if (!birthdateEl) return;
+
+    const cat     = getCategoryOptcode();
+    const refDate = (measureEl && measureEl.value) ? new Date(measureEl.value) : new Date(todayStr);
+
+    if (!cat) {
+      birthdateEl.min = '';
+      birthdateEl.max = todayStr;
+      return;
+    }
+    if (cat === 'CU5_0_23') {
+      // age 0–23 months: born between 23 months ago and measurement date
+      birthdateEl.min = dateMinusMonths(refDate, 23);
+      birthdateEl.max = refDate.toISOString().split('T')[0];
+    } else if (cat === 'CU5_24_59') {
+      // age 24–59 months: born between 59 months ago and 24 months ago
+      birthdateEl.min = dateMinusMonths(refDate, 59);
+      birthdateEl.max = dateMinusMonths(refDate, 24);
+    } else if (cat === 'WRA') {
+      // age 15–49 years
+      birthdateEl.min = dateMinusYears(refDate, 49);
+      birthdateEl.max = dateMinusYears(refDate, 15);
+    }
+  }
+
   window.validateSurveyDates = function () {
+    updateBirthdateConstraints();
+
     const birthdateEl = getDateEl('Q12_BIRTHDATE');
     const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
     let valid = true;
 
-    if (birthdateEl) {
-      if (birthdateEl.value && birthdateEl.value > todayStr) {
-        setFieldError(birthdateEl, 'Birthdate cannot be a future date.');
-        valid = false;
+    if (measureEl && measureEl.value && measureEl.value > todayStr) {
+      setFieldError(measureEl, 'Date of measurement cannot be a future date.');
+      valid = false;
+    } else if (measureEl) {
+      clearFieldError(measureEl);
+    }
+
+    if (!birthdateEl || !birthdateEl.value) return valid;
+
+    if (birthdateEl.value > todayStr) {
+      setFieldError(birthdateEl, 'Birthdate cannot be a future date.');
+      return false;
+    }
+
+    if (measureEl && measureEl.value && birthdateEl.value >= measureEl.value) {
+      setFieldError(birthdateEl, 'Birthdate must be before the date of measurement.');
+      return false;
+    }
+
+    if (measureEl && measureEl.value && valid) {
+      const birth   = new Date(birthdateEl.value);
+      const measure = new Date(measureEl.value);
+      const months  = calcAgeMonths(birth, measure);
+      const years   = Math.floor(months / 12);
+      const cat     = getCategoryOptcode();
+
+      if (cat) {
+        let ageErr = null;
+        if (cat === 'CU5_0_23'  && (months < 0  || months > 23))
+          ageErr = 'Age is ' + months + ' months — must be 0–23 months for this category.';
+        if (cat === 'CU5_24_59' && (months < 24 || months > 59))
+          ageErr = 'Age is ' + months + ' months — must be 24–59 months for this category.';
+        if (cat === 'WRA' && (years < 15 || years > 49))
+          ageErr = 'Age is ' + years + ' years — must be 15–49 years for this category.';
+        if (ageErr) { setFieldError(birthdateEl, ageErr); valid = false; }
+        else clearFieldError(birthdateEl);
       } else {
         clearFieldError(birthdateEl);
       }
-    }
-    if (measureEl) {
-      if (measureEl.value && measureEl.value > todayStr) {
-        setFieldError(measureEl, 'Date of measurement cannot be a future date.');
-        valid = false;
-      } else {
-        clearFieldError(measureEl);
-      }
-    }
-
-    if (birthdateEl && measureEl && birthdateEl.value && measureEl.value) {
-      if (birthdateEl.value >= measureEl.value) {
-        setFieldError(birthdateEl, 'Birthdate must be before the date of measurement.');
-        valid = false;
-      } else if (valid) {
-        const birth   = new Date(birthdateEl.value);
-        const measure = new Date(measureEl.value);
-        const months  = calcAgeMonths(birth, measure);
-        const years   = Math.floor(months / 12);
-        const cat     = getCategoryOptcode();
-
-        if (cat) {
-          let ageErr = null;
-          if (cat === 'CU5_0_23'  && (months < 0  || months > 23)) ageErr = 'Calculated age is ' + months + ' months but category is CU5 (0–23 months). Please correct.';
-          if (cat === 'CU5_24_59' && (months < 24 || months > 59)) ageErr = 'Calculated age is ' + months + ' months but category is CU5 (24–59 months). Please correct.';
-          if (cat === 'WRA' && (years < 15 || years > 49))          ageErr = 'Calculated age is ' + years + ' years but category is WRA (15–49 years). Please correct.';
-          if (ageErr) { setFieldError(birthdateEl, ageErr); valid = false; }
-        }
-      }
+    } else if (valid) {
+      clearFieldError(birthdateEl);
     }
 
     return valid;
   };
 
-  // Set max=today for birthdate and measurement date on load
+  // Init constraints and listeners
   document.addEventListener('DOMContentLoaded', function () {
-    const birthdateEl = getDateEl('Q12_BIRTHDATE');
-    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
-    if (birthdateEl && !birthdateEl.max) birthdateEl.max = todayStr;
-    if (measureEl   && !measureEl.max)   measureEl.max   = todayStr;
+    const measureEl = getDateEl('Q13_DATE_MEASUREMENT');
+    if (measureEl && !measureEl.max) measureEl.max = todayStr;
+    updateBirthdateConstraints();
+    if (measureEl) measureEl.addEventListener('change', function () { updateBirthdateConstraints(); validateSurveyDates(); });
   });
 
   // Block form submission if validation fails (capture phase — runs before offline handler)

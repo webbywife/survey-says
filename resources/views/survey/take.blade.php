@@ -187,6 +187,9 @@
           @if($q->variable_code === 'Q16C_WT3')
             <div id="wt-range-warn" style="display:none;padding:8px 12px;border-radius:4px;font-size:12px;background:#fff3cd;color:#856404;margin-top:6px;line-height:1.5"></div>
           @endif
+          @if($q->variable_code === 'Q17C_HT3')
+            <div id="ht-range-warn" style="display:none;padding:8px 12px;border-radius:4px;font-size:12px;background:#fff3cd;color:#856404;margin-top:6px;line-height:1.5"></div>
+          @endif
 
         @elseif($q->type==='date')
           @php $cfg=$q->config??[]; @endphp
@@ -903,7 +906,8 @@ if ('serviceWorker' in navigator) {
       clearFieldError(birthdateEl);
     }
 
-    if (window.validateWeightRange) window.validateWeightRange();
+    if (window.validateWeightRange)  window.validateWeightRange();
+    if (window.validateHeightRange) window.validateHeightRange();
     return valid;
   };
 
@@ -1043,6 +1047,77 @@ if ('serviceWorker' in navigator) {
   if (_wt3El) _wt3El.addEventListener('change', window.validateWeightRange);
   document.querySelectorAll('input[type=radio][data-varcode="Q15_SEX"]')
     .forEach(function (el) { el.addEventListener('change', window.validateWeightRange); });
+
+  // ── Height reference range check (3rd–97th percentile) ──────────────
+  // [ageMonths, [boysMin,boysMax], [girlsMin,girlsMax]]
+  const HT_REFS = [
+    [0,  [46.1,53.7], [45.4,52.9]],
+    [6,  [63.3,71.9], [61.2,70.3]],
+    [12, [71.0,80.5], [68.9,79.2]],
+    [18, [76.9,87.7], [74.9,86.5]],
+    [23, [81.0,92.9], [79.3,91.8]],
+  ];
+
+  window.validateHeightRange = function () {
+    const ageEl  = getNumEl('Q14B_AGE_MONTHS');
+    const sexEl  = document.querySelector('input[type=radio][data-varcode="Q15_SEX"]:checked');
+    const warnEl = document.getElementById('ht-range-warn');
+    if (!warnEl) return;
+
+    if (!ageEl || ageEl.value === '' || !sexEl) { warnEl.style.display = 'none'; return; }
+
+    const ageMonths = parseInt(ageEl.value, 10);
+    const sex = sexEl.dataset.optcode;
+    if (isNaN(ageMonths) || ageMonths < 0 || ageMonths > 23) { warnEl.style.display = 'none'; return; }
+
+    function interpHt(months) {
+      for (var i = 1; i < HT_REFS.length; i++) {
+        if (months <= HT_REFS[i][0]) {
+          var lo = HT_REFS[i-1], hi = HT_REFS[i];
+          var t  = (months - lo[0]) / (hi[0] - lo[0]);
+          var idx = sex === 'MALE' ? 1 : 2;
+          return [
+            lo[idx][0] + t * (hi[idx][0] - lo[idx][0]),
+            lo[idx][1] + t * (hi[idx][1] - lo[idx][1]),
+          ];
+        }
+      }
+      var idx = sex === 'MALE' ? 1 : 2;
+      return HT_REFS[HT_REFS.length - 1][idx];
+    }
+
+    var range = interpHt(ageMonths);
+    var minHt = range[0], maxHt = range[1];
+    var sexLabel = sex === 'MALE' ? 'boy' : 'girl';
+
+    var outOfRange = [];
+    ['Q17A_HT1','Q17B_HT2','Q17C_HT3'].forEach(function (vc) {
+      var el = getNumEl(vc);
+      if (!el || el.value === '') return;
+      var val = parseFloat(el.value);
+      if (isNaN(val)) return;
+      if (val < minHt || val > maxHt) {
+        outOfRange.push(vc.split('_')[1] + ' = ' + val.toFixed(1) + ' cm');
+      }
+    });
+
+    if (outOfRange.length) {
+      warnEl.style.display = '';
+      warnEl.innerHTML = '⚠ Height outside reference range for a ' + ageMonths
+        + '-month ' + sexLabel + ' (expected ' + minHt.toFixed(1) + '–' + maxHt.toFixed(1)
+        + ' cm, 3rd–97th %ile): ' + outOfRange.join(', ') + '. Please verify before submitting.';
+    } else {
+      warnEl.style.display = 'none';
+    }
+  };
+
+  // Re-run height range check when sex or any height field changes
+  const _ht3RangeEl = getNumEl('Q17C_HT3');
+  if (_ht1El) _ht1El.addEventListener('change', window.validateHeightRange);
+  if (_ht2El) _ht2El.addEventListener('change', window.validateHeightRange);
+  if (_ht3RangeEl) _ht3RangeEl.addEventListener('change', window.validateHeightRange);
+  document.querySelectorAll('input[type=radio][data-varcode="Q15_SEX"]')
+    .forEach(function (el) { el.addEventListener('change', window.validateHeightRange); });
 })();
 </script>
 </body>

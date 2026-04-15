@@ -559,8 +559,10 @@ async function syncNow() {
 
 // ─── Form submit interceptor ──────────────────────────────────────────────────
 document.getElementById('sf').addEventListener('submit', async function(e) {
-  // Date/age/category validation — must pass before online OR offline submit
-  if (typeof validateSurveyDates === 'function' && !validateSurveyDates()) {
+  // Validate dates/age and measurement cross-checks before online OR offline submit
+  const _datesOk   = typeof validateSurveyDates === 'function' ? validateSurveyDates()  : true;
+  const _weightsOk = typeof validateWeights     === 'function' ? validateWeights()       : true;
+  if (!_datesOk || !_weightsOk) {
     e.preventDefault();
     const errField = document.querySelector('input[style*="border-color: rgb(220, 53, 69)"], input[style*="border-color:rgb(220,53,69)"], input[style*="border-color: #dc3545"]');
     if (errField) errField.closest('.q-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -903,11 +905,42 @@ if ('serviceWorker' in navigator) {
     return valid;
   };
 
+  // ── Weight cross-validation (Wt2 must be within 0.1 kg of Wt1) ──────────────
+  function getNumEl(varcode) {
+    return document.querySelector('input[type=number][data-varcode="' + varcode + '"]');
+  }
+
+  window.validateWeights = function () {
+    const wt1El = getNumEl('Q16A_WT1');
+    const wt2El = getNumEl('Q16B_WT2');
+    if (!wt1El || !wt2El || !wt1El.value || !wt2El.value) return true;
+
+    const wt1  = parseFloat(wt1El.value);
+    const wt2  = parseFloat(wt2El.value);
+    if (isNaN(wt1) || isNaN(wt2)) return true;
+
+    const diff = Math.abs(wt2 - wt1);
+    if (diff > 0.1) {
+      setFieldError(wt2El,
+        'Wt2 (' + wt2.toFixed(2) + ' kg) differs from Wt1 (' + wt1.toFixed(2) + ' kg) by '
+        + diff.toFixed(2) + ' kg — must be within 0.1 kg.');
+      return false;
+    }
+    clearFieldError(wt2El);
+    return true;
+  };
+
   // Init immediately — DOM is already ready (inline script at bottom of body)
   const _measureEl = getDateEl('Q13_DATE_MEASUREMENT');
   if (_measureEl && !_measureEl.max) _measureEl.max = todayStr;
   updateBirthdateConstraints();
   if (_measureEl) _measureEl.addEventListener('change', function () { updateBirthdateConstraints(); validateSurveyDates(); });
+
+  // Live weight cross-check listeners
+  const _wt1El = getNumEl('Q16A_WT1');
+  const _wt2El = getNumEl('Q16B_WT2');
+  if (_wt1El) _wt1El.addEventListener('input', validateWeights);
+  if (_wt2El) _wt2El.addEventListener('input', validateWeights);
 })();
 </script>
 </body>

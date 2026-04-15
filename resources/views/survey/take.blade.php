@@ -142,7 +142,9 @@
           <ul class="choice-list">
             @foreach($q->options as $opt)
               <li><label>
-                <input type="radio" name="q_{{ $q->id }}" value="{{ $opt->option_code }}" {{ $existing?->value_text===$opt->option_code?'checked':'' }} onchange="applySkip()">
+                <input type="radio" name="q_{{ $q->id }}" value="{{ $opt->option_code }}"
+                  data-varcode="{{ $q->variable_code }}" data-optcode="{{ $opt->option_code }}"
+                  {{ $existing?->value_text===$opt->option_code?'checked':'' }} onchange="applySkip();validateSurveyDates()">
                 {{ $opt->label }}
               </label></li>
             @endforeach
@@ -186,10 +188,11 @@
           @php $cfg=$q->config??[]; @endphp
           <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
           <input type="date" name="q_{{ $q->id }}" style="max-width:220px"
+            data-varcode="{{ $q->variable_code }}"
             @if(!empty($cfg['min'])) min="{{ $cfg['min'] }}" @endif
             @if(!empty($cfg['max'])) max="{{ $cfg['max'] }}" @endif
             value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}
-            oninput="clampDate(this)">
+            oninput="clampDate(this)" onchange="validateSurveyDates()">
           @if(!empty($cfg['min']) || !empty($cfg['max']))
             <span style="font-size:11px;color:#aaa">{{ $cfg['min']??'' }} to {{ $cfg['max']??'' }}</span>
           @endif
@@ -738,6 +741,99 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js')
     .catch(err => console.warn('SW registration failed:', err));
 }
+
+// ─── Date / Age / Category validation ─────────────────────────────────────────
+(function () {
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  function getDateEl(varcode) {
+    return document.querySelector('input[type=date][data-varcode="' + varcode + '"]');
+  }
+  function getCategoryOptcode() {
+    const el = document.querySelector('input[type=radio][data-varcode="Q11_MEMBER_CATEGORY"]:checked');
+    return el ? el.dataset.optcode : null;
+  }
+  function calcAgeMonths(birth, measure) {
+    let m = (measure.getFullYear() - birth.getFullYear()) * 12
+           + (measure.getMonth() - birth.getMonth());
+    if (measure.getDate() < birth.getDate()) m--;
+    return m;
+  }
+  function setFieldError(el, msg) {
+    const errEl = document.getElementById('nerr-' + el.name.replace('q_', ''));
+    el.style.borderColor = '#dc3545';
+    if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
+  }
+  function clearFieldError(el) {
+    const errEl = document.getElementById('nerr-' + el.name.replace('q_', ''));
+    el.style.borderColor = '';
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+  }
+
+  window.validateSurveyDates = function () {
+    const birthdateEl = getDateEl('Q12_BIRTHDATE');
+    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
+    let valid = true;
+
+    if (birthdateEl) {
+      if (birthdateEl.value && birthdateEl.value > todayStr) {
+        setFieldError(birthdateEl, 'Birthdate cannot be a future date.');
+        valid = false;
+      } else {
+        clearFieldError(birthdateEl);
+      }
+    }
+    if (measureEl) {
+      if (measureEl.value && measureEl.value > todayStr) {
+        setFieldError(measureEl, 'Date of measurement cannot be a future date.');
+        valid = false;
+      } else {
+        clearFieldError(measureEl);
+      }
+    }
+
+    if (birthdateEl && measureEl && birthdateEl.value && measureEl.value) {
+      if (birthdateEl.value >= measureEl.value) {
+        setFieldError(birthdateEl, 'Birthdate must be before the date of measurement.');
+        valid = false;
+      } else if (valid) {
+        const birth   = new Date(birthdateEl.value);
+        const measure = new Date(measureEl.value);
+        const months  = calcAgeMonths(birth, measure);
+        const years   = Math.floor(months / 12);
+        const cat     = getCategoryOptcode();
+
+        if (cat) {
+          let ageErr = null;
+          if (cat === 'CU5_0_23'  && (months < 0  || months > 23)) ageErr = 'Calculated age is ' + months + ' months but category is CU5 (0–23 months). Please correct.';
+          if (cat === 'CU5_24_59' && (months < 24 || months > 59)) ageErr = 'Calculated age is ' + months + ' months but category is CU5 (24–59 months). Please correct.';
+          if (cat === 'WRA' && (years < 15 || years > 49))          ageErr = 'Calculated age is ' + years + ' years but category is WRA (15–49 years). Please correct.';
+          if (ageErr) { setFieldError(birthdateEl, ageErr); valid = false; }
+        }
+      }
+    }
+
+    return valid;
+  };
+
+  // Set max=today for birthdate and measurement date on load
+  document.addEventListener('DOMContentLoaded', function () {
+    const birthdateEl = getDateEl('Q12_BIRTHDATE');
+    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
+    if (birthdateEl && !birthdateEl.max) birthdateEl.max = todayStr;
+    if (measureEl   && !measureEl.max)   measureEl.max   = todayStr;
+  });
+
+  // Block form submission if validation fails (capture phase — runs before offline handler)
+  document.getElementById('sf').addEventListener('submit', function (e) {
+    if (!validateSurveyDates()) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const errField = document.querySelector('input[style*="border-color"]');
+      if (errField) errField.closest('.q-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, true);
+})();
 </script>
 </body>
 </html>

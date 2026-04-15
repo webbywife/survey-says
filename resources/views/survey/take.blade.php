@@ -935,11 +935,38 @@ if ('serviceWorker' in navigator) {
   updateBirthdateConstraints();
   if (_measureEl) _measureEl.addEventListener('change', function () { updateBirthdateConstraints(); validateSurveyDates(); });
 
+  // ── Height cross-validation (Ht2 must be within 0.5 cm of Ht1) ──────────────
+  window.validateHeights = function () {
+    const ht1El = getNumEl('Q17A_HT1');
+    const ht2El = getNumEl('Q17B_HT2');
+    if (!ht1El || !ht2El || !ht1El.value || !ht2El.value) return;
+
+    const ht1 = parseFloat(ht1El.value);
+    const ht2 = parseFloat(ht2El.value);
+    if (isNaN(ht1) || isNaN(ht2)) return;
+
+    const diff = Math.abs(ht2 - ht1);
+    if (diff > 0.5) {
+      ht2El.value = '';
+      setFieldError(ht2El,
+        'Value cleared — Ht2 differed from Ht1 (' + ht1.toFixed(1) + ' cm) by '
+        + diff.toFixed(1) + ' cm. Difference must be within 0.5 cm. Please re-measure.');
+    } else {
+      clearFieldError(ht2El);
+    }
+  };
+
   // Live weight cross-check listeners
   const _wt1El = getNumEl('Q16A_WT1');
   const _wt2El = getNumEl('Q16B_WT2');
   if (_wt1El) _wt1El.addEventListener('change', validateWeights);
   if (_wt2El) _wt2El.addEventListener('change', validateWeights);
+
+  // Live height cross-check listeners
+  const _ht1El = getNumEl('Q17A_HT1');
+  const _ht2El = getNumEl('Q17B_HT2');
+  if (_ht1El) _ht1El.addEventListener('change', validateHeights);
+  if (_ht2El) _ht2El.addEventListener('change', validateHeights);
 })();
 </script>
 </body>

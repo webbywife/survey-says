@@ -558,6 +558,14 @@ async function syncNow() {
 
 // ─── Form submit interceptor ──────────────────────────────────────────────────
 document.getElementById('sf').addEventListener('submit', async function(e) {
+  // Date/age/category validation — must pass before online OR offline submit
+  if (typeof validateSurveyDates === 'function' && !validateSurveyDates()) {
+    e.preventDefault();
+    const errField = document.querySelector('input[style*="border-color: rgb(220, 53, 69)"], input[style*="border-color:rgb(220,53,69)"], input[style*="border-color: #dc3545"]');
+    if (errField) errField.closest('.q-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
   if (navigator.onLine && !isForceOffline()) return; // let regular POST proceed
 
   e.preventDefault();
@@ -868,23 +876,11 @@ if ('serviceWorker' in navigator) {
     return valid;
   };
 
-  // Init constraints and listeners
-  document.addEventListener('DOMContentLoaded', function () {
-    const measureEl = getDateEl('Q13_DATE_MEASUREMENT');
-    if (measureEl && !measureEl.max) measureEl.max = todayStr;
-    updateBirthdateConstraints();
-    if (measureEl) measureEl.addEventListener('change', function () { updateBirthdateConstraints(); validateSurveyDates(); });
-  });
-
-  // Block form submission if validation fails (capture phase — runs before offline handler)
-  document.getElementById('sf').addEventListener('submit', function (e) {
-    if (!validateSurveyDates()) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const errField = document.querySelector('input[style*="border-color"]');
-      if (errField) errField.closest('.q-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, true);
+  // Init immediately — DOM is already ready (inline script at bottom of body)
+  const _measureEl = getDateEl('Q13_DATE_MEASUREMENT');
+  if (_measureEl && !_measureEl.max) _measureEl.max = todayStr;
+  updateBirthdateConstraints();
+  if (_measureEl) _measureEl.addEventListener('change', function () { updateBirthdateConstraints(); validateSurveyDates(); });
 })();
 </script>
 </body>

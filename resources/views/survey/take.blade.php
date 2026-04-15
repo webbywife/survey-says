@@ -174,7 +174,8 @@
         @elseif($q->type==='number')
           @php $cfg=$q->config??[]; @endphp
           <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
-          <input type="number" name="q_{{ $q->id }}" style="max-width:200px"
+          <input type="number" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}"
+            style="max-width:200px"
             min="{{ $cfg['min']??'' }}" max="{{ $cfg['max']??'' }}"
             value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}
             oninput="clampNumber(this)">
@@ -837,7 +838,14 @@ if ('serviceWorker' in navigator) {
       clearFieldError(measureEl);
     }
 
-    if (!birthdateEl || !birthdateEl.value) return valid;
+    if (!birthdateEl || !birthdateEl.value) {
+      // Clear auto-filled age fields if birthdate is removed
+      const ageYearsEl  = document.querySelector('input[type=number][data-varcode="Q14A_AGE_YEARS"]');
+      const ageMonthsEl = document.querySelector('input[type=number][data-varcode="Q14B_AGE_MONTHS"]');
+      if (ageYearsEl)  { ageYearsEl.value  = ''; ageYearsEl.readOnly  = false; ageYearsEl.style.background  = ''; ageYearsEl.style.color = ''; }
+      if (ageMonthsEl) { ageMonthsEl.value = ''; ageMonthsEl.readOnly = false; ageMonthsEl.style.background = ''; ageMonthsEl.style.color = ''; }
+      return valid;
+    }
 
     if (birthdateEl.value > todayStr) {
       setFieldError(birthdateEl, 'Birthdate cannot be a future date.');
@@ -855,6 +863,12 @@ if ('serviceWorker' in navigator) {
       const months  = calcAgeMonths(birth, measure);
       const years   = Math.floor(months / 12);
       const cat     = getCategoryOptcode();
+
+      // Auto-fill Q14a (age in years) and Q14b (age in months)
+      const ageYearsEl  = document.querySelector('input[type=number][data-varcode="Q14A_AGE_YEARS"]');
+      const ageMonthsEl = document.querySelector('input[type=number][data-varcode="Q14B_AGE_MONTHS"]');
+      if (ageYearsEl)  { ageYearsEl.value  = years;  ageYearsEl.readOnly  = true; ageYearsEl.style.background  = '#f5f5f5'; ageYearsEl.style.color = '#555'; }
+      if (ageMonthsEl) { ageMonthsEl.value = months; ageMonthsEl.readOnly = true; ageMonthsEl.style.background = '#f5f5f5'; ageMonthsEl.style.color = '#555'; }
 
       if (cat) {
         let ageErr = null;

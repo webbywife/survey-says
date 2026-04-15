@@ -183,8 +183,18 @@
           <div class="num-err" id="nerr-{{ $q->id }}" style="display:none;font-size:12px;color:#dc3545;margin-top:4px"></div>
 
         @elseif($q->type==='date')
-          <input type="date" name="q_{{ $q->id }}" style="max-width:220px;margin-top:12px"
-            value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}>
+          @php $cfg=$q->config??[]; @endphp
+          <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          <input type="date" name="q_{{ $q->id }}" style="max-width:220px"
+            @if(!empty($cfg['min'])) min="{{ $cfg['min'] }}" @endif
+            @if(!empty($cfg['max'])) max="{{ $cfg['max'] }}" @endif
+            value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}
+            oninput="clampDate(this)">
+          @if(!empty($cfg['min']) || !empty($cfg['max']))
+            <span style="font-size:11px;color:#aaa">{{ $cfg['min']??'' }} to {{ $cfg['max']??'' }}</span>
+          @endif
+          </div>
+          <div class="num-err" id="nerr-{{ $q->id }}" style="display:none;font-size:12px;color:#dc3545;margin-top:4px"></div>
 
         @elseif($q->type==='time')
           <input type="time" name="q_{{ $q->id }}" style="max-width:180px;margin-top:12px"
@@ -679,6 +689,26 @@ function clampNumber(el) {
       el.style.borderColor = '';
       if (errEl) errEl.style.display = 'none';
     }
+  }
+}
+
+function clampDate(el) {
+  if (!el.value) return;
+  const errEl = document.getElementById('nerr-' + el.name.replace('q_',''));
+  const val = el.value;
+  if (el.min && val < el.min) {
+    el.value = el.min;
+    el.style.borderColor = '#dc3545';
+    if (errEl) { errEl.textContent = 'Date must be on or after ' + el.min + '.'; errEl.style.display = ''; }
+    setTimeout(() => { el.style.borderColor = ''; if (errEl) errEl.style.display = 'none'; }, 2500);
+  } else if (el.max && val > el.max) {
+    el.value = el.max;
+    el.style.borderColor = '#dc3545';
+    if (errEl) { errEl.textContent = 'Date must be on or before ' + el.max + '.'; errEl.style.display = ''; }
+    setTimeout(() => { el.style.borderColor = ''; if (errEl) errEl.style.display = 'none'; }, 2500);
+  } else {
+    el.style.borderColor = '';
+    if (errEl) errEl.style.display = 'none';
   }
 }
 

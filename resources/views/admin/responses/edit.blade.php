@@ -97,7 +97,10 @@
           <textarea name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}" rows="3" style="font-size:13px">{{ old('q_'.$q->id, $ans?->value_text) }}</textarea>
 
         @elseif($q->type === 'number')
-          <input type="number" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}" value="{{ old('q_'.$q->id, $ans?->value_text) }}" style="max-width:200px">
+          @php $nStep = $q->config['step'] ?? '1'; @endphp
+          <input type="number" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}"
+            step="{{ $nStep }}" inputmode="decimal"
+            value="{{ old('q_'.$q->id, $ans?->value_text) }}" style="max-width:200px">
 
         @elseif($q->type === 'date')
           <input type="date" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}" value="{{ old('q_'.$q->id, $ans?->value_text) }}" style="max-width:200px">

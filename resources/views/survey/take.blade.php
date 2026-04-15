@@ -176,9 +176,9 @@
           <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
           <input type="number" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}"
             style="max-width:200px"
-            min="{{ $cfg['min']??'' }}" max="{{ $cfg['max']??'' }}"
+            min="{{ $cfg['min']??'' }}" max="{{ $cfg['max']??'' }}" step="{{ $cfg['step']??'1' }}"
             value="{{ $existing?->value_text??'' }}" {{ $q->is_required?'required':'' }}
-            oninput="clampNumber(this)">
+            inputmode="decimal" oninput="clampNumber(this)">
           @if(isset($cfg['min']) || isset($cfg['max']))
             <span class="num-range-hint" style="font-size:11px;color:#aaa">{{ isset($cfg['min']) ? $cfg['min'] : '' }}–{{ isset($cfg['max']) ? $cfg['max'] : '' }}</span>
           @endif

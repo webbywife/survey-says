@@ -938,8 +938,8 @@ if ('serviceWorker' in navigator) {
   // Live weight cross-check listeners
   const _wt1El = getNumEl('Q16A_WT1');
   const _wt2El = getNumEl('Q16B_WT2');
-  if (_wt1El) _wt1El.addEventListener('input', validateWeights);
-  if (_wt2El) _wt2El.addEventListener('input', validateWeights);
+  if (_wt1El) _wt1El.addEventListener('change', validateWeights);
+  if (_wt2El) _wt2El.addEventListener('change', validateWeights);
 })();
 </script>
 </body>

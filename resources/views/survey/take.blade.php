@@ -680,12 +680,25 @@ window.addEventListener('offline', () => setOfflineUI(true));
 applyModeUI();
 refreshSyncBar();
 
-// ─── Number clamp (enforces min/max regardless of online/offline mode) ───────
+// ─── Number clamp (enforces min/max and decimal places regardless of online/offline mode) ───────
 function clampNumber(el) {
-  const min = el.min !== '' ? parseFloat(el.min) : null;
-  const max = el.max !== '' ? parseFloat(el.max) : null;
+  const min    = el.min  !== '' ? parseFloat(el.min)  : null;
+  const max    = el.max  !== '' ? parseFloat(el.max)  : null;
+  const step   = el.step !== '' ? el.step : '1';
+  const maxDec = step.includes('.') ? step.split('.')[1].length : 0;
+  const errEl  = document.getElementById('nerr-' + el.name.replace('q_',''));
+
+  // Silently truncate excess decimal places while typing
+  if (maxDec > 0 && el.value.includes('.')) {
+    const parts = el.value.split('.');
+    if (parts[1].length > maxDec) {
+      el.value = parts[0] + '.' + parts[1].slice(0, maxDec);
+    }
+  } else if (maxDec === 0 && el.value.includes('.')) {
+    el.value = el.value.split('.')[0];
+  }
+
   const val = parseFloat(el.value);
-  const errEl = document.getElementById('nerr-' + el.name.replace('q_',''));
   if (!isNaN(val)) {
     if (max !== null && val > max) {
       el.value = max;

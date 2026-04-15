@@ -559,10 +559,8 @@ async function syncNow() {
 
 // ─── Form submit interceptor ──────────────────────────────────────────────────
 document.getElementById('sf').addEventListener('submit', async function(e) {
-  // Validate dates/age and measurement cross-checks before online OR offline submit
-  const _datesOk   = typeof validateSurveyDates === 'function' ? validateSurveyDates()  : true;
-  const _weightsOk = typeof validateWeights     === 'function' ? validateWeights()       : true;
-  if (!_datesOk || !_weightsOk) {
+  // Date/age/category validation — hard block on submit
+  if (typeof validateSurveyDates === 'function' && !validateSurveyDates()) {
     e.preventDefault();
     const errField = document.querySelector('input[style*="border-color: rgb(220, 53, 69)"], input[style*="border-color:rgb(220,53,69)"], input[style*="border-color: #dc3545"]');
     if (errField) errField.closest('.q-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -913,21 +911,22 @@ if ('serviceWorker' in navigator) {
   window.validateWeights = function () {
     const wt1El = getNumEl('Q16A_WT1');
     const wt2El = getNumEl('Q16B_WT2');
-    if (!wt1El || !wt2El || !wt1El.value || !wt2El.value) return true;
+    if (!wt1El || !wt2El || !wt1El.value || !wt2El.value) return;
 
-    const wt1  = parseFloat(wt1El.value);
-    const wt2  = parseFloat(wt2El.value);
-    if (isNaN(wt1) || isNaN(wt2)) return true;
+    const wt1 = parseFloat(wt1El.value);
+    const wt2 = parseFloat(wt2El.value);
+    if (isNaN(wt1) || isNaN(wt2)) return;
 
     const diff = Math.abs(wt2 - wt1);
     if (diff > 0.1) {
+      // Clear the invalid value and warn — does NOT block submission
+      wt2El.value = '';
       setFieldError(wt2El,
-        'Wt2 (' + wt2.toFixed(2) + ' kg) differs from Wt1 (' + wt1.toFixed(2) + ' kg) by '
-        + diff.toFixed(2) + ' kg — must be within 0.1 kg.');
-      return false;
+        'Value cleared — Wt2 differed from Wt1 (' + wt1.toFixed(2) + ' kg) by '
+        + diff.toFixed(2) + ' kg. Difference must be within 0.1 kg. Please re-measure.');
+    } else {
+      clearFieldError(wt2El);
     }
-    clearFieldError(wt2El);
-    return true;
   };
 
   // Init immediately — DOM is already ready (inline script at bottom of body)

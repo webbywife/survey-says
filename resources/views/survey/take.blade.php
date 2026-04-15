@@ -921,7 +921,7 @@ if ('serviceWorker' in navigator) {
     const wt2 = parseFloat(wt2El.value);
     if (isNaN(wt1) || isNaN(wt2)) return;
 
-    const diff = Math.abs(wt2 - wt1);
+    const diff = Math.round(Math.abs(wt2 - wt1) * 100) / 100;
     if (diff > 0.1) {
       // Clear the invalid value and warn — does NOT block submission
       wt2El.value = '';
@@ -949,7 +949,7 @@ if ('serviceWorker' in navigator) {
     const ht2 = parseFloat(ht2El.value);
     if (isNaN(ht1) || isNaN(ht2)) return;
 
-    const diff = Math.abs(ht2 - ht1);
+    const diff = Math.round(Math.abs(ht2 - ht1) * 10) / 10;
     if (diff > 0.5) {
       ht2El.value = '';
       setFieldError(ht2El,

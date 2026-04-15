@@ -184,6 +184,9 @@
           @endif
           </div>
           <div class="num-err" id="nerr-{{ $q->id }}" style="display:none;font-size:12px;color:#dc3545;margin-top:4px"></div>
+          @if($q->variable_code === 'Q16C_WT3')
+            <div id="wt-range-warn" style="display:none;padding:8px 12px;border-radius:4px;font-size:12px;background:#fff3cd;color:#856404;margin-top:6px;line-height:1.5"></div>
+          @endif
 
         @elseif($q->type==='date')
           @php $cfg=$q->config??[]; @endphp
@@ -900,6 +903,7 @@ if ('serviceWorker' in navigator) {
       clearFieldError(birthdateEl);
     }
 
+    if (window.validateWeightRange) window.validateWeightRange();
     return valid;
   };
 
@@ -967,6 +971,78 @@ if ('serviceWorker' in navigator) {
   const _ht2El = getNumEl('Q17B_HT2');
   if (_ht1El) _ht1El.addEventListener('change', validateHeights);
   if (_ht2El) _ht2El.addEventListener('change', validateHeights);
+
+  // ── Weight reference range check (3rd–97th percentile) ──────────────
+  // Reference data from chart: [ageMonths, [boysMin,boysMax], [girlsMin,girlsMax]]
+  const WT_REFS = [
+    [0,  [2.5, 4.4], [2.4, 4.2]],
+    [6,  [6.4, 9.8], [5.8, 9.2]],
+    [12, [7.7,12.0], [7.0,11.5]],
+    [18, [8.8,13.7], [8.1,13.2]],
+    [23, [9.5,14.8], [8.9,14.4]],
+  ];
+
+  window.validateWeightRange = function () {
+    const ageEl  = getNumEl('Q14B_AGE_MONTHS');
+    const sexEl  = document.querySelector('input[type=radio][data-varcode="Q15_SEX"]:checked');
+    const warnEl = document.getElementById('wt-range-warn');
+    if (!warnEl) return;
+
+    if (!ageEl || ageEl.value === '' || !sexEl) { warnEl.style.display = 'none'; return; }
+
+    const ageMonths = parseInt(ageEl.value, 10);
+    const sex = sexEl.dataset.optcode; // 'MALE' or 'FEMALE'
+    if (isNaN(ageMonths) || ageMonths < 0 || ageMonths > 23) { warnEl.style.display = 'none'; return; }
+
+    // Linear interpolation between reference milestones
+    function interp(months) {
+      for (var i = 1; i < WT_REFS.length; i++) {
+        if (months <= WT_REFS[i][0]) {
+          var lo = WT_REFS[i-1], hi = WT_REFS[i];
+          var t  = (months - lo[0]) / (hi[0] - lo[0]);
+          var idx = sex === 'MALE' ? 1 : 2;
+          return [
+            lo[idx][0] + t * (hi[idx][0] - lo[idx][0]),
+            lo[idx][1] + t * (hi[idx][1] - lo[idx][1]),
+          ];
+        }
+      }
+      var idx = sex === 'MALE' ? 1 : 2;
+      return WT_REFS[WT_REFS.length - 1][idx];
+    }
+
+    var range = interp(ageMonths);
+    var minWt = range[0], maxWt = range[1];
+    var sexLabel = sex === 'MALE' ? 'boy' : 'girl';
+
+    var outOfRange = [];
+    ['Q16A_WT1','Q16B_WT2','Q16C_WT3'].forEach(function (vc) {
+      var el = getNumEl(vc);
+      if (!el || el.value === '') return;
+      var val = parseFloat(el.value);
+      if (isNaN(val)) return;
+      if (val < minWt || val > maxWt) {
+        outOfRange.push(vc.split('_')[1] + ' = ' + val.toFixed(2) + ' kg');
+      }
+    });
+
+    if (outOfRange.length) {
+      warnEl.style.display = '';
+      warnEl.innerHTML = '⚠ Weight outside reference range for a ' + ageMonths
+        + '-month ' + sexLabel + ' (expected ' + minWt.toFixed(1) + '–' + maxWt.toFixed(1)
+        + ' kg, 3rd–97th %ile): ' + outOfRange.join(', ') + '. Please verify before submitting.';
+    } else {
+      warnEl.style.display = 'none';
+    }
+  };
+
+  // Re-run weight range check when sex or any weight field changes
+  const _wt3El = getNumEl('Q16C_WT3');
+  if (_wt1El) _wt1El.addEventListener('change', window.validateWeightRange);
+  if (_wt2El) _wt2El.addEventListener('change', window.validateWeightRange);
+  if (_wt3El) _wt3El.addEventListener('change', window.validateWeightRange);
+  document.querySelectorAll('input[type=radio][data-varcode="Q15_SEX"]')
+    .forEach(function (el) { el.addEventListener('change', window.validateWeightRange); });
 })();
 </script>
 </body>

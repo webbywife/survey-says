@@ -79,6 +79,13 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fafafa; }
 
+    /* Pagination */
+    .pagination { display: flex; gap: 4px; list-style: none; padding: 16px 0 4px; flex-wrap: wrap; }
+    .pagination .page-item .page-link { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; padding: 0 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; color: var(--maroon); text-decoration: none; background: #fff; }
+    .pagination .page-item.active .page-link { background: var(--maroon); color: #fff; border-color: var(--maroon); }
+    .pagination .page-item.disabled .page-link { color: #aaa; pointer-events: none; }
+    .pagination .page-item .page-link:hover:not(.active) { background: #f4f4f6; }
+
     /* Badges */
     .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
     .badge-draft    { background: #e9ecef; color: #555; }

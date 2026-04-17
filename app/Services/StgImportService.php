@@ -47,7 +47,7 @@ class StgImportService
             'row_count_total'      => $total,
             'row_count_imported'   => $this->imported,
             'row_count_skipped'    => $this->skipped,
-            'status'               => 'completed',
+            'status'               => 'done',
             'error_log'            => $this->errors ?: null,
             'completed_at'         => now(),
         ]);

@@ -93,8 +93,8 @@
           <td style="{{ $job->row_count_skipped > 0 ? 'color:#856404;font-weight:600' : '' }}">{{ $job->row_count_skipped }}</td>
           <td>
             <span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
-              background:{{ $job->status === 'completed' ? '#d4edda' : '#f8d7da' }};
-              color:{{ $job->status === 'completed' ? '#155724' : '#721c24' }}">
+              background:{{ $job->status === 'done' ? '#d4edda' : '#f8d7da' }};
+              color:{{ $job->status === 'done' ? '#155724' : '#721c24' }}">
               {{ ucfirst($job->status) }}
             </span>
           </td>

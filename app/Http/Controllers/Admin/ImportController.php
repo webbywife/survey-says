@@ -7,7 +7,6 @@ use App\Models\Survey;
 use App\Services\StgExportService;
 use App\Services\StgImportService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ImportController extends Controller
 {
@@ -29,15 +28,11 @@ class ImportController extends Controller
             'csv_file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
         ]);
 
-        Storage::disk('local')->makeDirectory('imports/tmp');
         $file     = $request->file('csv_file');
-        $path     = $file->store('imports/tmp', 'local');
-        $fullPath = Storage::disk('local')->path($path);
+        $fullPath = $file->getRealPath();
 
         $service = new StgImportService($survey);
         $job     = $service->import($fullPath, auth()->id());
-
-        @unlink($fullPath);
 
         $msg = "Imported {$job->row_count_imported} row(s).";
         if ($job->row_count_skipped > 0) {

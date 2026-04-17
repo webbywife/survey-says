@@ -33,7 +33,9 @@
           <td>{{ $survey->created_at->format('M d, Y') }}</td>
           <td style="white-space:nowrap">
             <a href="{{ route('admin.surveys.show', $survey) }}" class="btn btn-secondary btn-sm">View</a>
-            <a href="{{ route('admin.surveys.builder', $survey) }}" class="btn btn-primary btn-sm">Builder</a>
+            @if(auth()->user()->isAdmin() || $survey->user_id === auth()->id())
+              <a href="{{ route('admin.surveys.builder', $survey) }}" class="btn btn-primary btn-sm">Builder</a>
+            @endif
           </td>
         </tr>
       @empty

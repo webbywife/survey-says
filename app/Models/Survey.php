@@ -47,7 +47,9 @@ class Survey extends Model
     {
         return $user->isAdmin()
             || $this->user_id === $user->id
-            || $this->collaboratorUsers()->where('users.id', $user->id)->exists();
+            || SurveyCollaborator::where('survey_id', $this->id)
+                                 ->where('user_id', $user->id)
+                                 ->exists();
     }
 
     public function isOwnedOrAdminBy(User $user): bool

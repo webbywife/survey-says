@@ -91,6 +91,8 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
     });
 
     // Users (admin only)
+    Route::get('users/import',  [UserController::class, 'importForm'])->name('users.import')->middleware('role:admin');
+    Route::post('users/import', [UserController::class, 'importStore'])->name('users.import.store')->middleware('role:admin');
     Route::resource('users', UserController::class)->except(['show'])->middleware('role:admin');
 
     // Documentation

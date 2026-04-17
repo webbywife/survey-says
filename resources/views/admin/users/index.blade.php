@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Users')
 @section('topbar-actions')
+  <a href="{{ route('admin.users.import') }}" class="btn btn-secondary">⬆ Bulk Import</a>
   <a href="{{ route('admin.users.create') }}" class="btn btn-primary">+ New User</a>
 @endsection
 @section('content')

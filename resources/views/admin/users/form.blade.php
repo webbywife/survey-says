@@ -29,7 +29,8 @@
         <select name="role">
           <option value="researcher"   {{ old('role', $user->role) === 'researcher'   ? 'selected' : '' }}>Researcher</option>
           <option value="interviewer"  {{ old('role', $user->role) === 'interviewer'  ? 'selected' : '' }}>Interviewer</option>
-          <option value="supervisor"   {{ old('role', $user->role) === 'supervisor'   ? 'selected' : '' }}>Supervisor</option>
+          <option value="supervisor"    {{ old('role', $user->role) === 'supervisor'    ? 'selected' : '' }}>Supervisor</option>
+          <option value="study_leader" {{ old('role', $user->role) === 'study_leader' ? 'selected' : '' }}>Study Leader</option>
           <option value="admin"        {{ old('role', $user->role) === 'admin'        ? 'selected' : '' }}>Admin</option>
         </select>
       </div>

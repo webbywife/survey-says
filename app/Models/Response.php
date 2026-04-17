@@ -10,11 +10,14 @@ class Response extends Model
     protected $fillable = [
         'survey_id', 'serial', 'status', 'started_at', 'completed_at',
         'duration_seconds', 'ip_address', 'user_agent', 'respondent_token', 'is_offline_sync',
+        'checked_at', 'checked_by', 'approved_at', 'approved_by',
     ];
 
     protected $casts = [
         'started_at'   => 'datetime',
         'completed_at' => 'datetime',
+        'checked_at'   => 'datetime',
+        'approved_at'  => 'datetime',
         'status'       => 'integer',
     ];
 

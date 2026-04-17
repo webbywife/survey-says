@@ -70,11 +70,13 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
         Route::post('questions/{question}/grid-rows',         [QuestionController::class, 'storeGridRow'])->name('questions.gridrows.store');
         Route::delete('questions/{question}/grid-rows/{gridRow}', [QuestionController::class, 'destroyGridRow'])->name('questions.gridrows.destroy');
 
-        Route::get('responses',                    [ResponseController::class, 'index'])->name('responses.index');
-        Route::get('responses/{response}',         [ResponseController::class, 'show'])->name('responses.show');
-        Route::get('responses/{response}/edit',    [ResponseController::class, 'edit'])->name('responses.edit');
-        Route::put('responses/{response}',         [ResponseController::class, 'update'])->name('responses.update');
-        Route::delete('responses/{response}',      [ResponseController::class, 'destroy'])->name('responses.destroy');
+        Route::get('responses',                        [ResponseController::class, 'index'])->name('responses.index');
+        Route::get('responses/{response}',             [ResponseController::class, 'show'])->name('responses.show');
+        Route::get('responses/{response}/edit',        [ResponseController::class, 'edit'])->name('responses.edit');
+        Route::put('responses/{response}',             [ResponseController::class, 'update'])->name('responses.update');
+        Route::delete('responses/{response}',          [ResponseController::class, 'destroy'])->name('responses.destroy');
+        Route::post('responses/{response}/check',      [ResponseController::class, 'check'])->name('responses.check');
+        Route::post('responses/{response}/approve',    [ResponseController::class, 'approve'])->name('responses.approve');
 
         Route::get('export',               [ExportController::class, 'index'])->name('export.index');
         Route::get('export/download',      [ExportController::class, 'download'])->name('export.download');

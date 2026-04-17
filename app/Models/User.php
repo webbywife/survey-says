@@ -25,10 +25,21 @@ class User extends Authenticatable
     public function isResearcher(): bool   { return $this->role === 'researcher'; }
     public function isInterviewer(): bool  { return $this->role === 'interviewer'; }
     public function isSupervisor(): bool   { return $this->role === 'supervisor'; }
+    public function isStudyLeader(): bool  { return $this->role === 'study_leader'; }
 
     public function canEditResponses(): bool
     {
-        return in_array($this->role, ['admin', 'researcher', 'interviewer', 'supervisor']);
+        return in_array($this->role, ['admin', 'researcher', 'interviewer', 'supervisor', 'study_leader']);
+    }
+
+    public function canCheckResponses(): bool
+    {
+        return in_array($this->role, ['admin', 'supervisor', 'study_leader']);
+    }
+
+    public function canApproveResponses(): bool
+    {
+        return in_array($this->role, ['admin', 'study_leader']);
     }
 
     public function surveys(): HasMany { return $this->hasMany(Survey::class); }

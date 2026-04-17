@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan:*)",
+      "Bash(composer require:*)",
+      "Bash(php -l app/Services/StgExportService.php)",
+      "Bash(php -l app/Http/Controllers/Admin/ExportController.php)",
+      "Read(//Users/leaabarentos/.claude/**)",
+      "Read(//Users/leaabarentos/.config/**)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(ping -c 3 107.173.35.23)",
+      "Bash(composer show:*)",
+      "Bash(composer remove:*)",
+      "Read(//Users/leaabarentos/**)",
+      "Bash(ssh:*)",
+      "Bash(php -l app/Http/Controllers/Admin/SectionController.php)",
+      "Bash(php -l routes/web.php)",
+      "Bash(python3 -c ':*)",
+      "Bash(python3)",
+      "Bash(php -r ' $pdo = new PDO\\('\\\\''mysql:host=127.0.0.1;dbname='\\\\'' . \\(getenv\\('\\\\''DB_DATABASE'\\\\''\\) ?: '\\\\''surveysays'\\\\''\\), getenv\\('\\\\''DB_USERNAME'\\\\''\\) ?: '\\\\''root'\\\\'', getenv\\('\\\\''DB_PASSWORD'\\\\''\\) ?: '\\\\'''\\\\''\\); $tables = $pdo->query\\('\\\\''SHOW TABLES'\\\\''\\)->fetchAll\\(PDO::FETCH_COLUMN\\); print_r\\($tables\\); ')",
+      "Bash(php -l /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/ImportController.php)",
+      "Bash(php -l /Users/leaabarentos/surveysays/app/Services/StgImportService.php)",
+      "Bash(git -C /Users/leaabarentos/surveysays status)",
+      "Bash(git -C /Users/leaabarentos/surveysays diff --stat)",
+      "Bash(git -C /Users/leaabarentos/surveysays add app/Http/Controllers/Admin/ImportController.php app/Services/StgImportService.php resources/views/admin/import/index.blade.php resources/views/admin/surveys/show.blade.php routes/web.php)",
+      "Bash(git -C /Users/leaabarentos/surveysays commit -m ' *)",
+      "Bash(git *)",
+      "Bash(grep -r '$errors' /Users/leaabarentos/surveysays/resources/views/admin/ '--include=*.php' -l)",
+      "Bash(grep -r '$errors' /Users/leaabarentos/surveysays/resources/views/layouts/ '--include=*.php' -n)",
+      "Bash(sed -n '124,128p' /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/QuestionController.php)",
+      "Bash(sed -n '44,48p' /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/SectionController.php)",
+      "Bash(sed -n '131,135p' /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/SurveyController.php)",
+      "Bash(grep -v \"^$\")"
+    ]
+  }
+}

@@ -110,6 +110,34 @@ class ResponseController extends Controller
             ->with('success', 'Response deleted.');
     }
 
+    public function check(Survey $survey, Response $response)
+    {
+        $user = auth()->user();
+        if (!$user->canCheckResponses()) abort(403);
+        if (!$survey->canBeAccessedBy($user)) abort(403);
+
+        if ($response->checked_at) {
+            $response->update(['checked_at' => null, 'checked_by' => null]);
+            return back()->with('success', 'Check mark removed.');
+        }
+        $response->update(['checked_at' => now(), 'checked_by' => $user->id]);
+        return back()->with('success', 'Response marked as checked.');
+    }
+
+    public function approve(Survey $survey, Response $response)
+    {
+        $user = auth()->user();
+        if (!$user->canApproveResponses()) abort(403);
+        if (!$survey->canBeAccessedBy($user)) abort(403);
+
+        if ($response->approved_at) {
+            $response->update(['approved_at' => null, 'approved_by' => null]);
+            return back()->with('success', 'Approval removed.');
+        }
+        $response->update(['approved_at' => now(), 'approved_by' => $user->id]);
+        return back()->with('success', 'Response approved.');
+    }
+
     private function authorize(Survey $survey): void
     {
         if (!$survey->canBeAccessedBy(auth()->user())) abort(403);

@@ -1,6 +1,22 @@
 @extends('layouts.admin')
 @section('title', 'Response — ' . $response->serial)
 @section('topbar-actions')
+  @if(auth()->user()->canCheckResponses())
+    <form action="{{ route('admin.surveys.responses.check', [$survey, $response]) }}" method="POST" style="display:inline">
+      @csrf
+      <button class="btn btn-sm {{ $response->checked_at ? 'btn-primary' : 'btn-secondary' }}">
+        ✓ {{ $response->checked_at ? 'Checked' : 'Mark Checked' }}
+      </button>
+    </form>
+  @endif
+  @if(auth()->user()->canApproveResponses())
+    <form action="{{ route('admin.surveys.responses.approve', [$survey, $response]) }}" method="POST" style="display:inline">
+      @csrf
+      <button class="btn btn-sm {{ $response->approved_at ? 'btn-gold' : 'btn-secondary' }}">
+        ★ {{ $response->approved_at ? 'Approved' : 'Approve' }}
+      </button>
+    </form>
+  @endif
   @if(auth()->user()->canEditResponses())
     <a href="{{ route('admin.surveys.responses.edit', [$survey, $response]) }}" class="btn btn-primary btn-sm">Edit Response</a>
   @endif

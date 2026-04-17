@@ -14,8 +14,22 @@ class ResponseController extends Controller
     public function index(Survey $survey)
     {
         $this->authorize($survey);
-        $responses = $survey->responses()->latest()->paginate(50);
-        return view('admin.responses.index', compact('survey', 'responses'));
+
+        // Find the first question whose variable_code or label contains "NAME"
+        $nameQuestion = $survey->questions()
+            ->where(fn($q) =>
+                $q->whereRaw('UPPER(variable_code) LIKE ?', ['%NAME%'])
+                  ->orWhereRaw('UPPER(label) LIKE ?', ['%NAME%'])
+            )
+            ->orderBy('sort_order')
+            ->first();
+
+        $responses = $survey->responses()
+            ->when($nameQuestion, fn($q) => $q->with(['answers' => fn($q) => $q->where('question_id', $nameQuestion->id)]))
+            ->latest()
+            ->paginate(50);
+
+        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion'));
     }
 
     public function show(Survey $survey, Response $response)

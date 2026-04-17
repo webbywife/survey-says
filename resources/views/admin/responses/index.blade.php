@@ -9,12 +9,14 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Serial</th><th>Status</th><th>Started</th><th>Completed</th><th>Duration</th><th>IP</th><th></th></tr>
+        <tr><th>Serial</th>@if($nameQuestion)<th>Name</th>@endif<th>Status</th><th>Started</th><th>Completed</th><th>Duration</th><th>IP</th><th></th></tr>
       </thead>
       <tbody>
       @forelse($responses as $r)
+        @php $nameVal = $nameQuestion ? ($r->answers->first()?->value_text ?? '—') : null; @endphp
         <tr>
           <td><code style="font-size:12px">{{ $r->serial }}</code></td>
+          @if($nameQuestion)<td style="font-size:13px">{{ $nameVal }}</td>@endif
           <td><span class="badge badge-{{ $r->status===1?'complete':'partial' }}">{{ $r->status===1?'Complete':'Partial' }}</span></td>
           <td>{{ $r->started_at?->format('M d, Y H:i') ?? '—' }}</td>
           <td>{{ $r->completed_at?->format('H:i') ?? '—' }}</td>
@@ -34,7 +36,7 @@
           </td>
         </tr>
       @empty
-        <tr><td colspan="7" style="text-align:center;color:#888;padding:40px">No responses yet.</td></tr>
+        <tr><td colspan="{{ $nameQuestion ? 8 : 7 }}" style="text-align:center;color:#888;padding:40px">No responses yet.</td></tr>
       @endforelse
       </tbody>
     </table>

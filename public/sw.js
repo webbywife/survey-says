@@ -1,5 +1,5 @@
 const PSGC_CACHE   = 'ss-psgc-v2';
-const SURVEY_CACHE = 'ss-survey';   // no version — stable, never deleted
+const SURVEY_CACHE = 'ss-survey-v2'; // v2: network-first to avoid stale CSRF tokens
 
 // On install: pre-cache provinces + offline fallback page
 self.addEventListener('install', event => {
@@ -12,13 +12,15 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// On activate: delete old PSGC caches only (never delete survey cache)
+// On activate: delete old PSGC and survey caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k.startsWith('ss-psgc-') && k !== PSGC_CACHE)
-            .map(k => caches.delete(k))
+        keys.filter(k =>
+          (k.startsWith('ss-psgc-')   && k !== PSGC_CACHE) ||
+          (k.startsWith('ss-survey')  && k !== SURVEY_CACHE)
+        ).map(k => caches.delete(k))
       )
     )
   );
@@ -48,18 +50,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Survey pages — cache-first, update in background (stale-while-revalidate)
-  // Falls back to /offline.html if page not cached and network unavailable
+  // Survey pages — network-first so CSRF tokens are always fresh.
+  // Cache is only used as a fallback when the network is unreachable (offline).
   if (url.pathname.match(/^\/s\/[^/]+(\/done)?\/?(\?.*)?$/)) {
     event.respondWith(
-      caches.open(SURVEY_CACHE).then(cache =>
-        cache.match(event.request).then(cached => {
-          const fresh = fetch(event.request).then(res => {
-            if (res.ok) cache.put(event.request, res.clone());
-            return res;
-          }).catch(() => null);
-          return cached || fresh || caches.match('/offline.html');
-        })
+      fetch(event.request).then(res => {
+        // Update cache in the background so offline fallback stays fresh
+        if (res.ok) {
+          caches.open(SURVEY_CACHE).then(c => c.put(event.request, res.clone()));
+        }
+        return res;
+      }).catch(() =>
+        // Offline — serve cached version or generic offline page
+        caches.open(SURVEY_CACHE).then(c =>
+          c.match(event.request).then(cached => cached || caches.match('/offline.html'))
+        )
       )
     );
     return;

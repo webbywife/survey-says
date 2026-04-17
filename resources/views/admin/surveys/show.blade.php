@@ -45,6 +45,7 @@
 <div class="card">
   <div class="card-header"><span class="card-title">Actions</span></div>
   <div style="display:flex;flex-direction:column;gap:10px">
+    <a href="{{ route('admin.surveys.analytics.index', $survey) }}" class="btn btn-gold">View Analytics</a>
     <a href="{{ route('admin.surveys.responses.index', $survey) }}" class="btn btn-secondary">View Responses</a>
     <a href="{{ route('admin.surveys.export.index', $survey) }}" class="btn btn-secondary">Export Data (STG CSV)</a>
     <a href="{{ route('admin.surveys.import.index', $survey) }}" class="btn btn-secondary">Import Responses (CSV)</a>

@@ -34,6 +34,6 @@ class ExportController extends Controller
 
     private function authorize(Survey $survey): void
     {
-        if (!auth()->user()->isAdmin() && $survey->user_id !== auth()->id()) abort(403);
+        if (!$survey->canBeAccessedBy(auth()->user())) abort(403);
     }
 }

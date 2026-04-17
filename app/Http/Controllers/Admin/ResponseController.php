@@ -98,14 +98,13 @@ class ResponseController extends Controller
 
     private function authorize(Survey $survey): void
     {
-        $user = auth()->user();
-        if (!$user->canEditResponses() && $survey->user_id !== $user->id) abort(403);
+        if (!$survey->canBeAccessedBy(auth()->user())) abort(403);
     }
 
     private function authorizeEdit(Survey $survey): void
     {
         $user = auth()->user();
         if (!$user->canEditResponses()) abort(403);
-        if (!$user->isAdmin() && $survey->user_id !== $user->id) abort(403);
+        if (!$survey->canBeAccessedBy($user)) abort(403);
     }
 }

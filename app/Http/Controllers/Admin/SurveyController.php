@@ -12,7 +12,12 @@ class SurveyController extends Controller
     public function index()
     {
         $user  = auth()->user();
-        $query = $user->isAdmin() ? Survey::withTrashed() : Survey::ownedBy($user->id);
+        $query = $user->isAdmin()
+            ? Survey::withTrashed()
+            : Survey::where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('collaboratorUsers', fn($q) => $q->where('users.id', $user->id));
+              });
         $surveys = $query
             ->withCount('responses')
             ->withCount(['responses as complete_count' => fn($q) => $q->where('status', 1)])
@@ -36,7 +41,7 @@ class SurveyController extends Controller
 
     public function show(Survey $survey)
     {
-        $this->authorize($survey);
+        $this->authorizeAccess($survey);
         $survey->loadCount('responses');
         $completeCount = $survey->responses()->where('status', 1)->count();
         $partialCount  = $survey->responses()->where('status', 2)->count();
@@ -128,11 +133,14 @@ class SurveyController extends Controller
             ->with('success', 'Survey duplicated.');
     }
 
+    private function authorizeAccess(Survey $survey): void
+    {
+        if (!$survey->canBeAccessedBy(auth()->user())) abort(403);
+    }
+
     private function authorize(Survey $survey): void
     {
-        if (!auth()->user()->isAdmin() && $survey->user_id !== auth()->id()) {
-            abort(403);
-        }
+        if (!$survey->isOwnedOrAdminBy(auth()->user())) abort(403);
     }
 
     private function validated(Request $request, ?int $ignoreId = null): array

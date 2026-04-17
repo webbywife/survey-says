@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\CollaboratorController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SectionController;
@@ -82,6 +83,9 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
         Route::post('import',              [ImportController::class, 'store'])->name('import.store');
 
         Route::get('analytics',            [AnalyticsController::class, 'index'])->name('analytics.index');
+
+        Route::post('collaborators',                      [CollaboratorController::class, 'store'])->name('collaborators.store');
+        Route::delete('collaborators/{collaborator}',     [CollaboratorController::class, 'destroy'])->name('collaborators.destroy');
     });
 
     // Users (admin only)

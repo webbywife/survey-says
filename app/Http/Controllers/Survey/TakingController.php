@@ -160,7 +160,7 @@ class TakingController extends Controller
         $response->update([
             'status'           => 1,
             'completed_at'     => now(),
-            'duration_seconds' => $response->started_at ? now()->diffInSeconds($response->started_at) : null,
+            'duration_seconds' => $response->started_at ? (int) abs(now()->diffInSeconds($response->started_at)) : null,
         ]);
 
         session()->forget('respondent_token_' . $survey->id);

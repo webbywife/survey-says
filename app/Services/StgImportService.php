@@ -79,6 +79,7 @@ class StgImportService
                 'completed_at'     => $completedAt,
                 'duration_seconds' => is_numeric($duration) ? abs((int) $duration) : null,
                 'is_offline_sync'  => 0,
+                'respondent_token' => \Illuminate\Support\Str::random(32),
             ]);
 
             if (!$serial) {

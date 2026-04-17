@@ -73,11 +73,11 @@ class StgImportService
 
             $response = Response::create([
                 'survey_id'        => $this->survey->id,
-                'serial'           => $serial ?: null,
+                'serial'           => $serial ?: ('IMP-' . uniqid()),
                 'status'           => (int) ($data['Status'] ?? 1),
                 'started_at'       => $startedAt,
                 'completed_at'     => $completedAt,
-                'duration_seconds' => is_numeric($duration) ? (int) $duration : null,
+                'duration_seconds' => is_numeric($duration) ? abs((int) $duration) : null,
                 'is_offline_sync'  => 0,
             ]);
 

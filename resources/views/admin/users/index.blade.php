@@ -17,8 +17,12 @@
           <td><span class="badge badge-{{ $user->role }}">{{ ucfirst($user->role) }}</span></td>
           <td>{{ $user->is_active ? '✓' : '✗' }}</td>
           <td>{{ $user->last_login_at?->format('M d, Y H:i') ?? 'Never' }}</td>
-          <td>
+          <td style="white-space:nowrap">
             <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <form action="{{ route('admin.users.sendReset', $user) }}" method="POST" style="display:inline">
+              @csrf
+              <button class="btn btn-secondary btn-sm" onclick="return confirm('Send password reset email to {{ $user->email }}?')">Reset PW</button>
+            </form>
             @if($user->id !== auth()->id())
             <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display:inline">
               @csrf @method('DELETE')

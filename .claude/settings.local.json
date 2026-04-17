@@ -33,7 +33,8 @@
       "Bash(sed -n '124,128p' /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/QuestionController.php)",
       "Bash(sed -n '44,48p' /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/SectionController.php)",
       "Bash(sed -n '131,135p' /Users/leaabarentos/surveysays/app/Http/Controllers/Admin/SurveyController.php)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(php *)"
     ]
   }
 }

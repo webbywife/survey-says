@@ -21,6 +21,9 @@
     .btn-submit:hover { background: #550D0E; }
     .error { color: #dc3545; font-size: 12px; margin-top: 5px; }
     .alert { background: #f8d7da; color: #721c24; padding: 10px 14px; border-radius: 5px; margin-bottom: 18px; font-size: 13px; }
+    .alert-success { background: #d4edda; color: #155724; padding: 10px 14px; border-radius: 5px; margin-bottom: 18px; font-size: 13px; }
+    .forgot-link { display: block; text-align: right; font-size: 12px; color: #7B1213; text-decoration: none; margin-top: -10px; margin-bottom: 18px; }
+    .forgot-link:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -31,6 +34,9 @@
     <div class="login-sub">Data Collection Platform</div>
   </div>
   <div class="login-body">
+    @if(session('status'))
+      <div class="alert-success">{{ session('status') }}</div>
+    @endif
     @if($errors->any())
       <div class="alert">{{ $errors->first() }}</div>
     @endif
@@ -44,6 +50,7 @@
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
       </div>
+      <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
       <button type="submit" class="btn-submit">Sign In</button>
     </form>
   </div>

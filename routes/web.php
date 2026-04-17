@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\QuestionController;
@@ -36,6 +37,12 @@ Route::post('/s/{token}/sync', [SyncController::class, 'sync'])->name('survey.sy
 Route::get('/login',  [LoginController::class, 'showForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::post('/logout',[LoginController::class, 'logout'])->name('logout');
+
+// Password reset
+Route::get('/forgot-password',        [PasswordResetController::class, 'showRequest'])->name('password.request');
+Route::post('/forgot-password',       [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'showReset'])->name('password.reset');
+Route::post('/reset-password',        [PasswordResetController::class, 'resetPassword'])->name('password.update');
 
 // Admin / Researcher
 Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () {
@@ -91,8 +98,9 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
     });
 
     // Users (admin only)
-    Route::get('users/import',  [UserController::class, 'importForm'])->name('users.import')->middleware('role:admin');
-    Route::post('users/import', [UserController::class, 'importStore'])->name('users.import.store')->middleware('role:admin');
+    Route::get('users/import',         [UserController::class, 'importForm'])->name('users.import')->middleware('role:admin');
+    Route::post('users/import',        [UserController::class, 'importStore'])->name('users.import.store')->middleware('role:admin');
+    Route::post('users/{user}/reset',  [UserController::class, 'sendReset'])->name('users.sendReset')->middleware('role:admin');
     Route::resource('users', UserController::class)->except(['show'])->middleware('role:admin');
 
     // Documentation

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
@@ -48,6 +49,15 @@ class UserController extends Controller
         if ($user->id === auth()->id()) return back()->with('error', 'Cannot delete your own account.');
         $user->delete();
         return redirect()->route('admin.users.index')->with('success', 'User deleted.');
+    }
+
+    public function sendReset(User $user)
+    {
+        $status = Password::sendResetLink(['email' => $user->email]);
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with('success', "Password reset email sent to {$user->email}.");
+        }
+        return back()->with('error', 'Could not send reset email: ' . __($status));
     }
 
     public function importForm()

@@ -32,18 +32,24 @@
     <div class="stat-card" style="border-left:3px solid #C9A84C">
       <div class="stat-label" style="font-size:10px;margin-bottom:6px">{{ $c['code'] }}</div>
       <div style="font-size:13px;font-weight:600;color:#222;margin-bottom:10px;line-height:1.3">{{ $c['label'] }}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center;margin-bottom:6px">
+        <div style="background:#fdf6e8;border:1px solid #e2c47a;border-radius:5px;padding:8px 4px">
+          <div style="font-size:9px;color:#7a5c00;text-transform:uppercase;letter-spacing:.05em">Median</div>
+          <div style="font-size:18px;font-weight:700;color:#550D0E">{{ $c['median'] }}</div>
+        </div>
         <div style="background:#f8f8f8;border-radius:5px;padding:8px 4px">
           <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.05em">Mean</div>
-          <div style="font-size:16px;font-weight:700;color:#550D0E">{{ $c['avg'] }}</div>
+          <div style="font-size:18px;font-weight:700;color:#444">{{ $c['avg'] }}</div>
         </div>
-        <div style="background:#f8f8f8;border-radius:5px;padding:8px 4px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center">
+        <div style="background:#f8f8f8;border-radius:5px;padding:6px 4px">
           <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.05em">Min</div>
-          <div style="font-size:16px;font-weight:700;color:#444">{{ $c['min'] }}</div>
+          <div style="font-size:14px;font-weight:700;color:#444">{{ $c['min'] }}</div>
         </div>
-        <div style="background:#f8f8f8;border-radius:5px;padding:8px 4px">
+        <div style="background:#f8f8f8;border-radius:5px;padding:6px 4px">
           <div style="font-size:9px;color:#999;text-transform:uppercase;letter-spacing:.05em">Max</div>
-          <div style="font-size:16px;font-weight:700;color:#444">{{ $c['max'] }}</div>
+          <div style="font-size:14px;font-weight:700;color:#444">{{ $c['max'] }}</div>
         </div>
       </div>
       <div style="font-size:11px;color:#aaa;margin-top:8px;text-align:right">n = {{ $c['n'] }}</div>

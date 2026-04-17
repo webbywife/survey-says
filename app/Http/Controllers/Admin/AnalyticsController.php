@@ -68,23 +68,32 @@ class AnalyticsController extends Controller
                 ];
 
             } elseif ($question->type === 'number') {
-                $stats = DB::table('answers')
+                $values = DB::table('answers')
                     ->where('question_id', $question->id)
                     ->whereNotNull('value_text')
                     ->where('value_text', '!=', '')
-                    ->selectRaw('COUNT(*) as n, AVG(CAST(value_text AS DECIMAL(10,4))) as avg, MIN(CAST(value_text AS DECIMAL(10,4))) as min, MAX(CAST(value_text AS DECIMAL(10,4))) as max')
-                    ->first();
+                    ->pluck('value_text')
+                    ->map(fn($v) => (float) $v)
+                    ->sort()
+                    ->values();
 
-                if (!$stats || $stats->n == 0) continue;
+                if ($values->isEmpty()) continue;
+
+                $n      = $values->count();
+                $mid    = intdiv($n, 2);
+                $median = $n % 2 === 0
+                    ? round(($values[$mid - 1] + $values[$mid]) / 2, 2)
+                    : round($values[$mid], 2);
 
                 $charts[] = [
-                    'type'  => 'stat',
-                    'code'  => $question->variable_code,
-                    'label' => $question->label,
-                    'n'     => $stats->n,
-                    'avg'   => round($stats->avg, 2),
-                    'min'   => round($stats->min, 2),
-                    'max'   => round($stats->max, 2),
+                    'type'   => 'stat',
+                    'code'   => $question->variable_code,
+                    'label'  => $question->label,
+                    'n'      => $n,
+                    'avg'    => round($values->average(), 2),
+                    'median' => $median,
+                    'min'    => round($values->min(), 2),
+                    'max'    => round($values->max(), 2),
                 ];
             }
         }

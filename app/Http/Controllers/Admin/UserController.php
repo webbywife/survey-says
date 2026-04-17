@@ -88,11 +88,11 @@ class UserController extends Controller
                 continue;
             }
             if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "Row {$row}: invalid email "{$data['email']}".";
+                $errors[] = "Row {$row}: invalid email \"{$data['email']}\".";
                 continue;
             }
             if (!in_array($data['role'], $validRoles)) {
-                $errors[] = "Row {$row}: invalid role "{$data['role']}". Must be one of: " . implode(', ', $validRoles);
+                $errors[] = "Row {$row}: invalid role \"{$data['role']}\". Must be one of: " . implode(', ', $validRoles);
                 continue;
             }
             if (strlen($data['password']) < 8) {

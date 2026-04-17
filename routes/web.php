@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\SurveyController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\ResponseController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Survey\TakingController;
@@ -75,6 +76,9 @@ Route::prefix('admin')->name('admin.')->middleware(['role'])->group(function () 
 
         Route::get('export',               [ExportController::class, 'index'])->name('export.index');
         Route::get('export/download',      [ExportController::class, 'download'])->name('export.download');
+
+        Route::get('import',               [ImportController::class, 'index'])->name('import.index');
+        Route::post('import',              [ImportController::class, 'store'])->name('import.store');
     });
 
     // Users (admin only)

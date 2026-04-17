@@ -47,6 +47,7 @@
   <div style="display:flex;flex-direction:column;gap:10px">
     <a href="{{ route('admin.surveys.responses.index', $survey) }}" class="btn btn-secondary">View Responses</a>
     <a href="{{ route('admin.surveys.export.index', $survey) }}" class="btn btn-secondary">Export Data (STG CSV)</a>
+    <a href="{{ route('admin.surveys.import.index', $survey) }}" class="btn btn-secondary">Import Responses (CSV)</a>
     @if($survey->status === 'active')
       <form action="{{ route('admin.surveys.close', $survey) }}" method="POST">
         @csrf <button class="btn btn-danger btn-sm">Close Survey</button>

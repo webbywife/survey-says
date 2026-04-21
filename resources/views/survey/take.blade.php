@@ -817,14 +817,16 @@ if ('serviceWorker' in navigator) {
   // Update birthdate min/max based on selected category and measurement date
   function updateBirthdateConstraints() {
     const birthdateEl = getDateEl('Q12_BIRTHDATE');
-    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
+    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT') || getDateEl('Q13_REF_DATE');
     if (!birthdateEl) return;
 
     const cat     = getCategoryOptcode();
     const refDate = (measureEl && measureEl.value) ? new Date(measureEl.value) : new Date(todayStr);
 
     if (!cat) {
-      birthdateEl.min = '';
+      // Preserve config-supplied min (e.g. 2024-01-01 for under-23-month surveys)
+      const configMin = birthdateEl.getAttribute('min');
+      birthdateEl.min = configMin || '';
       birthdateEl.max = todayStr;
       return;
     }
@@ -847,7 +849,7 @@ if ('serviceWorker' in navigator) {
     updateBirthdateConstraints();
 
     const birthdateEl = getDateEl('Q12_BIRTHDATE');
-    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT');
+    const measureEl   = getDateEl('Q13_DATE_MEASUREMENT') || getDateEl('Q13_REF_DATE');
     let valid = true;
 
     if (measureEl && measureEl.value && measureEl.value > todayStr) {
@@ -860,7 +862,8 @@ if ('serviceWorker' in navigator) {
     if (!birthdateEl || !birthdateEl.value) {
       // Clear auto-filled age fields if birthdate is removed
       const ageYearsEl  = document.querySelector('input[type=number][data-varcode="Q14A_AGE_YEARS"]');
-      const ageMonthsEl = document.querySelector('input[type=number][data-varcode="Q14B_AGE_MONTHS"]');
+      const ageMonthsEl = document.querySelector('input[type=number][data-varcode="Q14B_AGE_MONTHS"]')
+                       || document.querySelector('input[type=number][data-varcode="Q14_AGE_MONTHS"]');
       if (ageYearsEl)  { ageYearsEl.value  = ''; ageYearsEl.readOnly  = false; ageYearsEl.style.background  = ''; ageYearsEl.style.color = ''; }
       if (ageMonthsEl) { ageMonthsEl.value = ''; ageMonthsEl.readOnly = false; ageMonthsEl.style.background = ''; ageMonthsEl.style.color = ''; }
       return valid;
@@ -883,9 +886,10 @@ if ('serviceWorker' in navigator) {
       const years   = Math.floor(months / 12);
       const cat     = getCategoryOptcode();
 
-      // Auto-fill Q14a (age in years) and Q14b (age in months)
+      // Auto-fill Q14a (age in years) and Q14b / Q14_AGE_MONTHS (age in months)
       const ageYearsEl  = document.querySelector('input[type=number][data-varcode="Q14A_AGE_YEARS"]');
-      const ageMonthsEl = document.querySelector('input[type=number][data-varcode="Q14B_AGE_MONTHS"]');
+      const ageMonthsEl = document.querySelector('input[type=number][data-varcode="Q14B_AGE_MONTHS"]')
+                       || document.querySelector('input[type=number][data-varcode="Q14_AGE_MONTHS"]');
       if (ageYearsEl)  { ageYearsEl.value  = years;  ageYearsEl.readOnly  = true; ageYearsEl.style.background  = '#f5f5f5'; ageYearsEl.style.color = '#555'; }
       if (ageMonthsEl) { ageMonthsEl.value = months; ageMonthsEl.readOnly = true; ageMonthsEl.style.background = '#f5f5f5'; ageMonthsEl.style.color = '#555'; }
 

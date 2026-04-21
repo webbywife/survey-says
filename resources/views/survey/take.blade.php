@@ -679,7 +679,6 @@ function selRating(btn){
 document.querySelectorAll('input[type=radio],input[type=checkbox]').forEach(el=>el.addEventListener('change',applySkip));
 document.querySelectorAll('input[type=text],input[type=number],input[type=date],input[type=time],textarea').forEach(el=>el.addEventListener('input',applySkip));
 applySkip();
-validateSurveyDates();
 
 // ─── Online/offline event listeners ──────────────────────────────────────────
 window.addEventListener('online',  () => { setOfflineUI(false); if (!isForceOffline()) syncNow(); });
@@ -1124,6 +1123,9 @@ if ('serviceWorker' in navigator) {
   document.querySelectorAll('input[type=radio][data-varcode="Q15_SEX"]')
     .forEach(function (el) { el.addEventListener('change', window.validateHeightRange); });
 })();
+
+// Apply date constraints once all functions are defined
+if (window.validateSurveyDates) validateSurveyDates();
 </script>
 </body>
 </html>

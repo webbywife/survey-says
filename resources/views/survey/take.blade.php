@@ -824,10 +824,11 @@ if ('serviceWorker' in navigator) {
     const refDate = (measureEl && measureEl.value) ? new Date(measureEl.value) : new Date(todayStr);
 
     if (!cat) {
-      // Preserve config-supplied min (e.g. 2024-01-01 for under-23-month surveys)
-      const configMin = birthdateEl.getAttribute('min');
-      birthdateEl.min = configMin || '';
+      // No category selector — survey targets 0–23 month old children only.
+      // Dynamically set max = today and min = 24 months ago so the year
+      // picker only shows valid years regardless of browser.
       birthdateEl.max = todayStr;
+      birthdateEl.min = dateMinusMonths(new Date(todayStr), 24);
       return;
     }
     if (cat === 'CU5_0_23') {

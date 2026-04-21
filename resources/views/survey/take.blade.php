@@ -679,6 +679,7 @@ function selRating(btn){
 document.querySelectorAll('input[type=radio],input[type=checkbox]').forEach(el=>el.addEventListener('change',applySkip));
 document.querySelectorAll('input[type=text],input[type=number],input[type=date],input[type=time],textarea').forEach(el=>el.addEventListener('input',applySkip));
 applySkip();
+validateSurveyDates();
 
 // ─── Online/offline event listeners ──────────────────────────────────────────
 window.addEventListener('online',  () => { setOfflineUI(false); if (!isForceOffline()) syncNow(); });

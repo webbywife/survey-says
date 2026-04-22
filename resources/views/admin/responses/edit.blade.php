@@ -101,6 +101,15 @@
           <input type="number" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}"
             step="{{ $nStep }}" inputmode="decimal"
             value="{{ old('q_'.$q->id, $ans?->value_text) }}" style="max-width:200px">
+          @if(in_array($q->variable_code, ['Q16B_WT2','Q17B_HT2']))
+            <div id="nerr-{{ $q->id }}" style="display:none;font-size:12px;color:#dc3545;margin-top:4px"></div>
+          @endif
+          @if($q->variable_code === 'Q16C_WT3')
+            <div id="wt-range-warn" style="display:none;padding:8px 12px;border-radius:4px;font-size:12px;background:#fff3cd;color:#856404;margin-top:6px;line-height:1.5"></div>
+          @endif
+          @if($q->variable_code === 'Q17C_HT3')
+            <div id="ht-range-warn" style="display:none;padding:8px 12px;border-radius:4px;font-size:12px;background:#fff3cd;color:#856404;margin-top:6px;line-height:1.5"></div>
+          @endif
 
         @elseif($q->type === 'date')
           <input type="date" name="q_{{ $q->id }}" data-varcode="{{ $q->variable_code }}" value="{{ old('q_'.$q->id, $ans?->value_text) }}" style="max-width:200px">
@@ -241,6 +250,128 @@
     if (birthdateEl) birthdateEl.addEventListener('change', validate);
     if (measureEl)   measureEl.addEventListener('change', validate);
     validate(); // run on load to show existing data state
+  });
+
+  // ── Weight / Height validation ────────────────────────────────────────────
+  function getNumEl(varcode) {
+    return document.querySelector('input[type=number][data-varcode="' + varcode + '"]');
+  }
+  function setFieldErr(el, msg) {
+    var errEl = document.getElementById('nerr-' + el.name.replace('q_', ''));
+    el.style.borderColor = '#dc3545';
+    if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
+  }
+  function clearFieldErr(el) {
+    var errEl = document.getElementById('nerr-' + el.name.replace('q_', ''));
+    el.style.borderColor = '';
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+  }
+
+  function validateWeights() {
+    var wt1El = getNumEl('Q16A_WT1'), wt2El = getNumEl('Q16B_WT2');
+    if (!wt1El || !wt2El || !wt1El.value || !wt2El.value) return;
+    var diff = Math.round(Math.abs(parseFloat(wt2El.value) - parseFloat(wt1El.value)) * 100) / 100;
+    if (diff > 0.1) {
+      setFieldErr(wt2El, 'Wt2 differs from Wt1 (' + parseFloat(wt1El.value).toFixed(2) + ' kg) by ' + diff.toFixed(2) + ' kg — must be ≤ 0.1 kg. Please verify.');
+    } else {
+      clearFieldErr(wt2El);
+    }
+  }
+
+  function validateHeights() {
+    var ht1El = getNumEl('Q17A_HT1'), ht2El = getNumEl('Q17B_HT2');
+    if (!ht1El || !ht2El || !ht1El.value || !ht2El.value) return;
+    var diff = Math.round(Math.abs(parseFloat(ht2El.value) - parseFloat(ht1El.value)) * 10) / 10;
+    if (diff > 0.5) {
+      setFieldErr(ht2El, 'Ht2 differs from Ht1 (' + parseFloat(ht1El.value).toFixed(1) + ' cm) by ' + diff.toFixed(1) + ' cm — must be ≤ 0.5 cm. Please verify.');
+    } else {
+      clearFieldErr(ht2El);
+    }
+  }
+
+  var WT_REFS = [
+    [0,  [2.5, 4.4], [2.4, 4.2]],
+    [6,  [6.4, 9.8], [5.8, 9.2]],
+    [12, [7.7,12.0], [7.0,11.5]],
+    [18, [8.8,13.7], [8.1,13.2]],
+    [23, [9.5,14.8], [8.9,14.4]],
+  ];
+  var HT_REFS = [
+    [0,  [46.1,53.7], [45.4,52.9]],
+    [6,  [63.3,71.9], [61.2,70.3]],
+    [12, [71.0,80.5], [68.9,79.2]],
+    [18, [76.9,87.7], [74.9,86.5]],
+    [23, [81.0,92.9], [79.3,91.8]],
+  ];
+
+  function interpRange(refs, months, sex) {
+    var idx = sex === 'MALE' ? 1 : 2;
+    for (var i = 1; i < refs.length; i++) {
+      if (months <= refs[i][0]) {
+        var lo = refs[i-1], hi = refs[i], t = (months - lo[0]) / (hi[0] - lo[0]);
+        return [lo[idx][0] + t*(hi[idx][0]-lo[idx][0]), lo[idx][1] + t*(hi[idx][1]-lo[idx][1])];
+      }
+    }
+    return refs[refs.length-1][idx];
+  }
+
+  function validateWeightRange() {
+    var ageEl = getNumEl('Q14B_AGE_MONTHS');
+    var sexEl = document.querySelector('input[type=radio][data-varcode="Q15_SEX"]:checked');
+    var warnEl = document.getElementById('wt-range-warn');
+    if (!warnEl || !ageEl || ageEl.value === '' || !sexEl) { if (warnEl) warnEl.style.display = 'none'; return; }
+    var age = parseInt(ageEl.value, 10), sex = sexEl.dataset.optcode;
+    if (isNaN(age) || age < 0 || age > 23) { warnEl.style.display = 'none'; return; }
+    var range = interpRange(WT_REFS, age, sex), out = [];
+    ['Q16A_WT1','Q16B_WT2','Q16C_WT3'].forEach(function(vc) {
+      var el = getNumEl(vc); if (!el || el.value === '') return;
+      var v = parseFloat(el.value);
+      if (!isNaN(v) && (v < range[0] || v > range[1])) out.push(vc.split('_')[1] + ' = ' + v.toFixed(2) + ' kg');
+    });
+    if (out.length) {
+      warnEl.style.display = '';
+      warnEl.innerHTML = '⚠ Weight outside reference range for a ' + age + '-month '
+        + (sex === 'MALE' ? 'boy' : 'girl') + ' (expected ' + range[0].toFixed(1) + '–' + range[1].toFixed(1)
+        + ' kg, 3rd–97th %ile): ' + out.join(', ') + '. Please verify before saving.';
+    } else { warnEl.style.display = 'none'; }
+  }
+
+  function validateHeightRange() {
+    var ageEl = getNumEl('Q14B_AGE_MONTHS');
+    var sexEl = document.querySelector('input[type=radio][data-varcode="Q15_SEX"]:checked');
+    var warnEl = document.getElementById('ht-range-warn');
+    if (!warnEl || !ageEl || ageEl.value === '' || !sexEl) { if (warnEl) warnEl.style.display = 'none'; return; }
+    var age = parseInt(ageEl.value, 10), sex = sexEl.dataset.optcode;
+    if (isNaN(age) || age < 0 || age > 23) { warnEl.style.display = 'none'; return; }
+    var range = interpRange(HT_REFS, age, sex), out = [];
+    ['Q17A_HT1','Q17B_HT2','Q17C_HT3'].forEach(function(vc) {
+      var el = getNumEl(vc); if (!el || el.value === '') return;
+      var v = parseFloat(el.value);
+      if (!isNaN(v) && (v < range[0] || v > range[1])) out.push(vc.split('_')[1] + ' = ' + v.toFixed(1) + ' cm');
+    });
+    if (out.length) {
+      warnEl.style.display = '';
+      warnEl.innerHTML = '⚠ Height outside reference range for a ' + age + '-month '
+        + (sex === 'MALE' ? 'boy' : 'girl') + ' (expected ' + range[0].toFixed(1) + '–' + range[1].toFixed(1)
+        + ' cm, 3rd–97th %ile): ' + out.join(', ') + '. Please verify before saving.';
+    } else { warnEl.style.display = 'none'; }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var wt1 = getNumEl('Q16A_WT1'), wt2 = getNumEl('Q16B_WT2'), wt3 = getNumEl('Q16C_WT3');
+    var ht1 = getNumEl('Q17A_HT1'), ht2 = getNumEl('Q17B_HT2'), ht3 = getNumEl('Q17C_HT3');
+    var ageEl = getNumEl('Q14B_AGE_MONTHS');
+    if (wt1) wt1.addEventListener('change', validateWeights);
+    if (wt2) wt2.addEventListener('change', validateWeights);
+    if (ht1) ht1.addEventListener('change', validateHeights);
+    if (ht2) ht2.addEventListener('change', validateHeights);
+    [wt1,wt2,wt3].forEach(function(el) { if (el) el.addEventListener('change', validateWeightRange); });
+    [ht1,ht2,ht3].forEach(function(el) { if (el) el.addEventListener('change', validateHeightRange); });
+    if (ageEl) { ageEl.addEventListener('change', validateWeightRange); ageEl.addEventListener('change', validateHeightRange); }
+    document.querySelectorAll('input[type=radio][data-varcode="Q15_SEX"]').forEach(function(el) {
+      el.addEventListener('change', validateWeightRange); el.addEventListener('change', validateHeightRange);
+    });
+    validateWeights(); validateHeights(); validateWeightRange(); validateHeightRange();
   });
 })();
 </script>

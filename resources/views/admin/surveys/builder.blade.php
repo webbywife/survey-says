@@ -19,6 +19,13 @@
 .section-divider{background:var(--maroon-d);color:#fff;padding:8px 14px;border-radius:5px;margin:16px 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;justify-content:space-between}
 .section-divider button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:3px;padding:2px 8px;font-size:10px;cursor:pointer;letter-spacing:0;text-transform:none}
 .section-divider button:hover{background:rgba(255,255,255,.3)}
+.sec-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.sec-modal-bg.open{display:flex}
+.sec-modal{background:#fff;border-radius:10px;padding:28px;width:100%;max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.sec-modal h3{margin:0 0 18px;font-family:'Playfair Display',serif;color:var(--maroon-d);font-size:18px}
+.sec-modal label{display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:5px}
+.sec-modal textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:14px}
+.sec-modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .add-section-bar{border:2px dashed #C9A84C;border-radius:5px;padding:10px 14px;text-align:center;margin-bottom:10px;color:#C9A84C;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
 .add-section-bar:hover{background:#fdf6e8}
 .req-toggle{border:none;border-radius:3px;font-size:10px;padding:2px 7px;margin-left:8px;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:.03em;transition:background .15s,color .15s}
@@ -157,6 +164,22 @@
   </div>
 </div>
 
+<!-- Section edit modal -->
+<div class="sec-modal-bg" id="sec-modal-bg">
+  <div class="sec-modal">
+    <h3 id="sec-modal-title">Edit Section</h3>
+    <label for="sec-modal-text">Section Heading *</label>
+    <textarea id="sec-modal-text" rows="4" placeholder="Section heading text…"></textarea>
+    <label for="sec-modal-desc">Description / Introductory Text (optional)</label>
+    <textarea id="sec-modal-desc" rows="3" placeholder="Optional sub-text shown below the heading…"></textarea>
+    <div id="sec-modal-err" style="color:#dc3545;font-size:12px;margin-bottom:8px;display:none"></div>
+    <div class="sec-modal-footer">
+      <button class="btn btn-secondary btn-sm" onclick="closeSectionModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="sec-modal-save" onclick="saveSectionModal()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SID = {{ $survey->id }};
 const CSRF = document.querySelector('meta[name=csrf-token]').content;
@@ -282,20 +305,49 @@ function reset(){
   onType();
 }
 
-async function addSectionPrompt(){
-  const title=prompt('Section title:');
-  if(!title)return;
-  const desc=prompt('Section description (optional):') || '';
-  await api(`/admin/surveys/${SID}/sections`,'POST',{title,description:desc});
-  location.reload();
+let _secModalId = null;
+
+function openSectionModal(id, title, desc, heading){
+  _secModalId = id;
+  document.getElementById('sec-modal-title').textContent = heading;
+  document.getElementById('sec-modal-text').value = title || '';
+  document.getElementById('sec-modal-desc').value = desc || '';
+  document.getElementById('sec-modal-err').style.display = 'none';
+  document.getElementById('sec-modal-bg').classList.add('open');
+  document.getElementById('sec-modal-text').focus();
 }
 
-async function editSection(id,title,desc){
-  const newTitle=prompt('Section title:',title);
-  if(!newTitle)return;
-  const newDesc=prompt('Section description (optional):',desc) || '';
-  await api(`/admin/surveys/${SID}/sections/${id}`,'PUT',{title:newTitle,description:newDesc});
-  location.reload();
+function closeSectionModal(){
+  document.getElementById('sec-modal-bg').classList.remove('open');
+  _secModalId = null;
+}
+
+async function saveSectionModal(){
+  const title = document.getElementById('sec-modal-text').value.trim();
+  const desc  = document.getElementById('sec-modal-desc').value.trim();
+  const errEl = document.getElementById('sec-modal-err');
+  if(!title){ errEl.textContent='Heading is required.'; errEl.style.display=''; return; }
+  const btn = document.getElementById('sec-modal-save');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    if(_secModalId){
+      await api(`/admin/surveys/${SID}/sections/${_secModalId}`,'PUT',{title,description:desc});
+    } else {
+      await api(`/admin/surveys/${SID}/sections`,'POST',{title,description:desc});
+    }
+    location.reload();
+  } catch(e){
+    btn.disabled=false; btn.textContent='Save';
+    errEl.textContent='Save failed — please try again.'; errEl.style.display='';
+  }
+}
+
+function addSectionPrompt(){
+  openSectionModal(null,'','','Add Section Divider');
+}
+
+function editSection(id,title,desc){
+  openSectionModal(id,title,desc,'Edit Section');
 }
 
 async function deleteSection(id){
@@ -354,6 +406,13 @@ sortScript.onload = function() {
   });
 };
 document.head.appendChild(sortScript);
+
+document.getElementById('sec-modal-bg').addEventListener('click', function(e){
+  if(e.target === this) closeSectionModal();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeSectionModal();
+});
 </script>
 <style>#q-list .q-drag-ghost{opacity:.4;background:#fdf6e8;border-color:#C9A84C}</style>
 @endsection

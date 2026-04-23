@@ -109,10 +109,10 @@
     @endif
     @php
       $qNum = 0; $lastSectionId = null;
-      $hasNamePlaceholder = $questions->contains(fn($q) => str_contains($q->label, '[NAME]'));
+      $hasNamePlaceholder = $questions->contains(fn($q) => str_contains($q->label ?? '', '[NAME]') || str_contains($q->help_text ?? '', '[NAME]'));
       $nameSourceId = null;
       if ($hasNamePlaceholder) {
-        $firstPlaceholderPos = $questions->search(fn($q) => str_contains($q->label, '[NAME]'));
+        $firstPlaceholderPos = $questions->search(fn($q) => str_contains($q->label ?? '', '[NAME]') || str_contains($q->help_text ?? '', '[NAME]'));
         $nameSourceId = $questions->take($firstPlaceholderPos)
           ->filter(fn($q) => stripos($q->label, 'NAME') !== false)
           ->last()?->id;
@@ -136,7 +136,7 @@
       <div class="q-card" id="qc-{{ $q->id }}" data-qid="{{ $q->id }}">
         <div class="q-num">Q{{ $qNum }}@if($q->is_required) <span style="color:#dc3545">*</span>@endif</div>
         <div class="q-text"@if(str_contains($q->label, '[NAME]')) data-tpl="{{ $q->label }}"@endif>{!! nl2br(e($q->label)) !!}</div>
-        @if($q->help_text)<div class="q-help">{{ $q->help_text }}</div>@endif
+        @if($q->help_text)<div class="q-help"@if(str_contains($q->help_text, '[NAME]')) data-tpl-help="{{ $q->help_text }}"@endif>{{ $q->help_text }}</div>@endif
 
         @if($q->type==='single_choice')
           <ul class="choice-list">
@@ -766,6 +766,10 @@ function clampDate(el) {
     document.querySelectorAll('.q-text[data-tpl]').forEach(el => {
       const tpl = el.getAttribute('data-tpl');
       el.innerHTML = esc(tpl).replace(/\[NAME\]/g, display).replace(/\n/g, '<br>');
+    });
+    document.querySelectorAll('.q-help[data-tpl-help]').forEach(el => {
+      const tpl = el.getAttribute('data-tpl-help');
+      el.innerHTML = esc(tpl).replace(/\[NAME\]/g, display);
     });
   }
   nameInput.addEventListener('input', applyName);

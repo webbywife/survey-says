@@ -933,8 +933,18 @@ if ('serviceWorker' in navigator) {
     const wt1El = getNumEl('Q16A_WT1');
     const wt2El = getNumEl('Q16B_WT2');
     const wt3El = getNumEl('Q16C_WT3');
-    if (!wt1El || !wt1El.value) return;
 
+    // Wt2 and Wt3 require Wt1 to be filled first
+    if (wt2El && wt2El.value && (!wt1El || !wt1El.value)) {
+      wt2El.value = '';
+      setFieldError(wt2El, 'Please enter Weight 1 (Wt1) before entering Weight 2.');
+    }
+    if (wt3El && wt3El.value && (!wt1El || !wt1El.value)) {
+      wt3El.value = '';
+      setFieldError(wt3El, 'Please enter Weight 1 (Wt1) before entering Weight 3.');
+    }
+
+    if (!wt1El || !wt1El.value) return;
     const wt1 = parseFloat(wt1El.value);
     if (isNaN(wt1)) return;
 
@@ -980,8 +990,18 @@ if ('serviceWorker' in navigator) {
     const ht1El = getNumEl('Q17A_HT1');
     const ht2El = getNumEl('Q17B_HT2');
     const ht3El = getNumEl('Q17C_HT3');
-    if (!ht1El || !ht1El.value) return;
 
+    // Ht2 and Ht3 require Ht1 to be filled first
+    if (ht2El && ht2El.value && (!ht1El || !ht1El.value)) {
+      ht2El.value = '';
+      setFieldError(ht2El, 'Please enter Height 1 (Ht1) before entering Height 2.');
+    }
+    if (ht3El && ht3El.value && (!ht1El || !ht1El.value)) {
+      ht3El.value = '';
+      setFieldError(ht3El, 'Please enter Height 1 (Ht1) before entering Height 3.');
+    }
+
+    if (!ht1El || !ht1El.value) return;
     const ht1 = parseFloat(ht1El.value);
     if (isNaN(ht1)) return;
 
@@ -1016,21 +1036,21 @@ if ('serviceWorker' in navigator) {
     }
   };
 
-  // Live weight cross-check listeners
+  // Weight/height cross-validation via delegated form listener — catches all fields reliably
+  var _sfEl = document.getElementById('sf');
+  if (_sfEl) {
+    _sfEl.addEventListener('change', function(e) {
+      var vc = e.target && e.target.dataset && e.target.dataset.varcode;
+      if (!vc) return;
+      if (['Q16A_WT1','Q16B_WT2','Q16C_WT3'].indexOf(vc) !== -1) window.validateWeights();
+      if (['Q17A_HT1','Q17B_HT2','Q17C_HT3'].indexOf(vc) !== -1) window.validateHeights();
+    });
+  }
+  // Kept for validateWeightRange / validateHeightRange listener setup below
   const _wt1El = getNumEl('Q16A_WT1');
   const _wt2El = getNumEl('Q16B_WT2');
-  const _wt3El_cross = getNumEl('Q16C_WT3');
-  if (_wt1El) _wt1El.addEventListener('change', validateWeights);
-  if (_wt2El) _wt2El.addEventListener('change', validateWeights);
-  if (_wt3El_cross) _wt3El_cross.addEventListener('change', validateWeights);
-
-  // Live height cross-check listeners
   const _ht1El = getNumEl('Q17A_HT1');
   const _ht2El = getNumEl('Q17B_HT2');
-  const _ht3El_cross = getNumEl('Q17C_HT3');
-  if (_ht1El) _ht1El.addEventListener('change', validateHeights);
-  if (_ht2El) _ht2El.addEventListener('change', validateHeights);
-  if (_ht3El_cross) _ht3El_cross.addEventListener('change', validateHeights);
 
   // ── Weight reference range check (3rd–97th percentile) ──────────────
   // Reference data from chart: [ageMonths, [boysMin,boysMax], [girlsMin,girlsMax]]

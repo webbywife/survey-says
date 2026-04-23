@@ -269,6 +269,12 @@
 
   function validateWeights() {
     var wt1El = getNumEl('Q16A_WT1'), wt2El = getNumEl('Q16B_WT2'), wt3El = getNumEl('Q16C_WT3');
+    if (wt2El && wt2El.value && (!wt1El || !wt1El.value)) {
+      setFieldErr(wt2El, 'Please enter Weight 1 (Wt1) before entering Weight 2.');
+    }
+    if (wt3El && wt3El.value && (!wt1El || !wt1El.value)) {
+      setFieldErr(wt3El, 'Please enter Weight 1 (Wt1) before entering Weight 3.');
+    }
     if (!wt1El || !wt1El.value) return;
     var wt1 = parseFloat(wt1El.value);
     if (wt2El && wt2El.value) {
@@ -291,6 +297,12 @@
 
   function validateHeights() {
     var ht1El = getNumEl('Q17A_HT1'), ht2El = getNumEl('Q17B_HT2'), ht3El = getNumEl('Q17C_HT3');
+    if (ht2El && ht2El.value && (!ht1El || !ht1El.value)) {
+      setFieldErr(ht2El, 'Please enter Height 1 (Ht1) before entering Height 2.');
+    }
+    if (ht3El && ht3El.value && (!ht1El || !ht1El.value)) {
+      setFieldErr(ht3El, 'Please enter Height 1 (Ht1) before entering Height 3.');
+    }
     if (!ht1El || !ht1El.value) return;
     var ht1 = parseFloat(ht1El.value);
     if (ht2El && ht2El.value) {

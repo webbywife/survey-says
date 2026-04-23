@@ -57,7 +57,10 @@
         <div class="section-divider" id="sec-{{ $sec->id }}">
           <span>{{ $sec->title }}@if($sec->description) — <span style="font-weight:400;opacity:.8">{{ $sec->description }}</span>@endif</span>
           <div style="display:flex;gap:4px">
-            <button onclick="editSection({{ $sec->id }},'{{ addslashes($sec->title) }}','{{ addslashes($sec->description ?? '') }}')">Edit</button>
+            <button class="sec-edit-btn"
+              data-id="{{ $sec->id }}"
+              data-title="{{ $sec->title }}"
+              data-desc="{{ $sec->description ?? '' }}">Edit</button>
             <button onclick="deleteSection({{ $sec->id }})">Delete</button>
           </div>
         </div>
@@ -412,6 +415,15 @@ document.getElementById('sec-modal-bg').addEventListener('click', function(e){
 });
 document.addEventListener('keydown', function(e){
   if(e.key === 'Escape') closeSectionModal();
+});
+document.querySelectorAll('.sec-edit-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    editSection(
+      parseInt(this.dataset.id),
+      this.dataset.title,
+      this.dataset.desc
+    );
+  });
 });
 </script>
 <style>#q-list .q-drag-ghost{opacity:.4;background:#fdf6e8;border-color:#C9A84C}</style>

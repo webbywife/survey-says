@@ -192,7 +192,16 @@
           @endif
 
         @elseif($q->type==='date')
-          @php $cfg=$q->config??[]; @endphp
+          @php
+            $cfg = is_array($q->config) ? $q->config : [];
+            // For the birthdate field in 0–23 month child surveys (no member category question),
+            // compute min/max server-side so the picker renders with correct constraints immediately.
+            $hasMemberCategory = $questions->contains('variable_code', 'Q11_MEMBER_CATEGORY');
+            if ($q->variable_code === 'Q12_BIRTHDATE' && !$hasMemberCategory) {
+                $cfg['min'] = now()->subMonths(24)->format('Y-m-d');
+                $cfg['max'] = now()->format('Y-m-d');
+            }
+          @endphp
           <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
           <input type="date" name="q_{{ $q->id }}" style="max-width:220px"
             data-varcode="{{ $q->variable_code }}"
@@ -880,9 +889,10 @@ if ('serviceWorker' in navigator) {
       return false;
     }
 
-    if (measureEl && measureEl.value && valid) {
+    const effectiveMeasure = (measureEl && measureEl.value) ? measureEl.value : todayStr;
+    if (valid) {
       const birth   = new Date(birthdateEl.value);
-      const measure = new Date(measureEl.value);
+      const measure = new Date(effectiveMeasure);
       const months  = calcAgeMonths(birth, measure);
       const years   = Math.floor(months / 12);
       const cat     = getCategoryOptcode();
@@ -907,8 +917,6 @@ if ('serviceWorker' in navigator) {
       } else {
         clearFieldError(birthdateEl);
       }
-    } else if (valid) {
-      clearFieldError(birthdateEl);
     }
 
     if (window.validateWeightRange)  window.validateWeightRange();
@@ -924,21 +932,40 @@ if ('serviceWorker' in navigator) {
   window.validateWeights = function () {
     const wt1El = getNumEl('Q16A_WT1');
     const wt2El = getNumEl('Q16B_WT2');
-    if (!wt1El || !wt2El || !wt1El.value || !wt2El.value) return;
+    const wt3El = getNumEl('Q16C_WT3');
+    if (!wt1El || !wt1El.value) return;
 
     const wt1 = parseFloat(wt1El.value);
-    const wt2 = parseFloat(wt2El.value);
-    if (isNaN(wt1) || isNaN(wt2)) return;
+    if (isNaN(wt1)) return;
 
-    const diff = Math.round(Math.abs(wt2 - wt1) * 100) / 100;
-    if (diff > 0.1) {
-      // Clear the invalid value and warn — does NOT block submission
-      wt2El.value = '';
-      setFieldError(wt2El,
-        'Value cleared — Wt2 differed from Wt1 (' + wt1.toFixed(2) + ' kg) by '
-        + diff.toFixed(2) + ' kg. Difference must be within 0.1 kg. Please re-measure.');
-    } else {
-      clearFieldError(wt2El);
+    if (wt2El && wt2El.value) {
+      const wt2 = parseFloat(wt2El.value);
+      if (!isNaN(wt2)) {
+        const diff2 = Math.round(Math.abs(wt2 - wt1) * 100) / 100;
+        if (diff2 > 0.1) {
+          wt2El.value = '';
+          setFieldError(wt2El,
+            'Value cleared — Wt2 differed from Wt1 (' + wt1.toFixed(2) + ' kg) by '
+            + diff2.toFixed(2) + ' kg. Difference must be within 0.1 kg. Please re-measure.');
+        } else {
+          clearFieldError(wt2El);
+        }
+      }
+    }
+
+    if (wt3El && wt3El.value) {
+      const wt3 = parseFloat(wt3El.value);
+      if (!isNaN(wt3)) {
+        const diff3 = Math.round(Math.abs(wt3 - wt1) * 100) / 100;
+        if (diff3 > 0.1) {
+          wt3El.value = '';
+          setFieldError(wt3El,
+            'Value cleared — Wt3 differed from Wt1 (' + wt1.toFixed(2) + ' kg) by '
+            + diff3.toFixed(2) + ' kg. Difference must be within 0.1 kg. Please re-measure.');
+        } else {
+          clearFieldError(wt3El);
+        }
+      }
     }
   };
 
@@ -952,34 +979,58 @@ if ('serviceWorker' in navigator) {
   window.validateHeights = function () {
     const ht1El = getNumEl('Q17A_HT1');
     const ht2El = getNumEl('Q17B_HT2');
-    if (!ht1El || !ht2El || !ht1El.value || !ht2El.value) return;
+    const ht3El = getNumEl('Q17C_HT3');
+    if (!ht1El || !ht1El.value) return;
 
     const ht1 = parseFloat(ht1El.value);
-    const ht2 = parseFloat(ht2El.value);
-    if (isNaN(ht1) || isNaN(ht2)) return;
+    if (isNaN(ht1)) return;
 
-    const diff = Math.round(Math.abs(ht2 - ht1) * 10) / 10;
-    if (diff > 0.5) {
-      ht2El.value = '';
-      setFieldError(ht2El,
-        'Value cleared — Ht2 differed from Ht1 (' + ht1.toFixed(1) + ' cm) by '
-        + diff.toFixed(1) + ' cm. Difference must be within 0.5 cm. Please re-measure.');
-    } else {
-      clearFieldError(ht2El);
+    if (ht2El && ht2El.value) {
+      const ht2 = parseFloat(ht2El.value);
+      if (!isNaN(ht2)) {
+        const diff2 = Math.round(Math.abs(ht2 - ht1) * 10) / 10;
+        if (diff2 > 0.5) {
+          ht2El.value = '';
+          setFieldError(ht2El,
+            'Value cleared — Ht2 differed from Ht1 (' + ht1.toFixed(1) + ' cm) by '
+            + diff2.toFixed(1) + ' cm. Difference must be within 0.5 cm. Please re-measure.');
+        } else {
+          clearFieldError(ht2El);
+        }
+      }
+    }
+
+    if (ht3El && ht3El.value) {
+      const ht3 = parseFloat(ht3El.value);
+      if (!isNaN(ht3)) {
+        const diff3 = Math.round(Math.abs(ht3 - ht1) * 10) / 10;
+        if (diff3 > 0.5) {
+          ht3El.value = '';
+          setFieldError(ht3El,
+            'Value cleared — Ht3 differed from Ht1 (' + ht1.toFixed(1) + ' cm) by '
+            + diff3.toFixed(1) + ' cm. Difference must be within 0.5 cm. Please re-measure.');
+        } else {
+          clearFieldError(ht3El);
+        }
+      }
     }
   };
 
   // Live weight cross-check listeners
   const _wt1El = getNumEl('Q16A_WT1');
   const _wt2El = getNumEl('Q16B_WT2');
+  const _wt3El_cross = getNumEl('Q16C_WT3');
   if (_wt1El) _wt1El.addEventListener('change', validateWeights);
   if (_wt2El) _wt2El.addEventListener('change', validateWeights);
+  if (_wt3El_cross) _wt3El_cross.addEventListener('change', validateWeights);
 
   // Live height cross-check listeners
   const _ht1El = getNumEl('Q17A_HT1');
   const _ht2El = getNumEl('Q17B_HT2');
+  const _ht3El_cross = getNumEl('Q17C_HT3');
   if (_ht1El) _ht1El.addEventListener('change', validateHeights);
   if (_ht2El) _ht2El.addEventListener('change', validateHeights);
+  if (_ht3El_cross) _ht3El_cross.addEventListener('change', validateHeights);
 
   // ── Weight reference range check (3rd–97th percentile) ──────────────
   // Reference data from chart: [ageMonths, [boysMin,boysMax], [girlsMin,girlsMax]]

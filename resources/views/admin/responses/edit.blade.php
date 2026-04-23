@@ -268,24 +268,46 @@
   }
 
   function validateWeights() {
-    var wt1El = getNumEl('Q16A_WT1'), wt2El = getNumEl('Q16B_WT2');
-    if (!wt1El || !wt2El || !wt1El.value || !wt2El.value) return;
-    var diff = Math.round(Math.abs(parseFloat(wt2El.value) - parseFloat(wt1El.value)) * 100) / 100;
-    if (diff > 0.1) {
-      setFieldErr(wt2El, 'Wt2 differs from Wt1 (' + parseFloat(wt1El.value).toFixed(2) + ' kg) by ' + diff.toFixed(2) + ' kg — must be ≤ 0.1 kg. Please verify.');
-    } else {
-      clearFieldErr(wt2El);
+    var wt1El = getNumEl('Q16A_WT1'), wt2El = getNumEl('Q16B_WT2'), wt3El = getNumEl('Q16C_WT3');
+    if (!wt1El || !wt1El.value) return;
+    var wt1 = parseFloat(wt1El.value);
+    if (wt2El && wt2El.value) {
+      var diff2 = Math.round(Math.abs(parseFloat(wt2El.value) - wt1) * 100) / 100;
+      if (diff2 > 0.1) {
+        setFieldErr(wt2El, 'Wt2 differs from Wt1 (' + wt1.toFixed(2) + ' kg) by ' + diff2.toFixed(2) + ' kg — must be ≤ 0.1 kg. Please verify.');
+      } else {
+        clearFieldErr(wt2El);
+      }
+    }
+    if (wt3El && wt3El.value) {
+      var diff3 = Math.round(Math.abs(parseFloat(wt3El.value) - wt1) * 100) / 100;
+      if (diff3 > 0.1) {
+        setFieldErr(wt3El, 'Wt3 differs from Wt1 (' + wt1.toFixed(2) + ' kg) by ' + diff3.toFixed(2) + ' kg — must be ≤ 0.1 kg. Please verify.');
+      } else {
+        clearFieldErr(wt3El);
+      }
     }
   }
 
   function validateHeights() {
-    var ht1El = getNumEl('Q17A_HT1'), ht2El = getNumEl('Q17B_HT2');
-    if (!ht1El || !ht2El || !ht1El.value || !ht2El.value) return;
-    var diff = Math.round(Math.abs(parseFloat(ht2El.value) - parseFloat(ht1El.value)) * 10) / 10;
-    if (diff > 0.5) {
-      setFieldErr(ht2El, 'Ht2 differs from Ht1 (' + parseFloat(ht1El.value).toFixed(1) + ' cm) by ' + diff.toFixed(1) + ' cm — must be ≤ 0.5 cm. Please verify.');
-    } else {
-      clearFieldErr(ht2El);
+    var ht1El = getNumEl('Q17A_HT1'), ht2El = getNumEl('Q17B_HT2'), ht3El = getNumEl('Q17C_HT3');
+    if (!ht1El || !ht1El.value) return;
+    var ht1 = parseFloat(ht1El.value);
+    if (ht2El && ht2El.value) {
+      var diff2 = Math.round(Math.abs(parseFloat(ht2El.value) - ht1) * 10) / 10;
+      if (diff2 > 0.5) {
+        setFieldErr(ht2El, 'Ht2 differs from Ht1 (' + ht1.toFixed(1) + ' cm) by ' + diff2.toFixed(1) + ' cm — must be ≤ 0.5 cm. Please verify.');
+      } else {
+        clearFieldErr(ht2El);
+      }
+    }
+    if (ht3El && ht3El.value) {
+      var diff3 = Math.round(Math.abs(parseFloat(ht3El.value) - ht1) * 10) / 10;
+      if (diff3 > 0.5) {
+        setFieldErr(ht3El, 'Ht3 differs from Ht1 (' + ht1.toFixed(1) + ' cm) by ' + diff3.toFixed(1) + ' cm — must be ≤ 0.5 cm. Please verify.');
+      } else {
+        clearFieldErr(ht3El);
+      }
     }
   }
 
@@ -363,8 +385,10 @@
     var ageEl = getNumEl('Q14B_AGE_MONTHS');
     if (wt1) wt1.addEventListener('change', validateWeights);
     if (wt2) wt2.addEventListener('change', validateWeights);
+    if (wt3) wt3.addEventListener('change', validateWeights);
     if (ht1) ht1.addEventListener('change', validateHeights);
     if (ht2) ht2.addEventListener('change', validateHeights);
+    if (ht3) ht3.addEventListener('change', validateHeights);
     [wt1,wt2,wt3].forEach(function(el) { if (el) el.addEventListener('change', validateWeightRange); });
     [ht1,ht2,ht3].forEach(function(el) { if (el) el.addEventListener('change', validateHeightRange); });
     if (ageEl) { ageEl.addEventListener('change', validateWeightRange); ageEl.addEventListener('change', validateHeightRange); }

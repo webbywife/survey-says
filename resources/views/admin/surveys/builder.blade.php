@@ -132,6 +132,24 @@
       <input type="text" id="f-help">
     </div>
 
+    <div id="num-config-section" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-top:4px">
+      <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#555;margin-bottom:10px">Number Range</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Min Value</label>
+          <input type="number" id="f-num-min" step="any" placeholder="e.g. 0">
+        </div>
+        <div class="form-group">
+          <label>Max Value</label>
+          <input type="number" id="f-num-max" step="any" placeholder="e.g. 100">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Step <span style="font-weight:400;color:#aaa;text-transform:none;letter-spacing:0">(1 = whole, 0.1 = one decimal)</span></label>
+        <input type="number" id="f-num-step" step="any" placeholder="default: 1">
+      </div>
+    </div>
+
     <div id="ph-loc-info" style="display:none;background:#f0f4ff;border:1px solid #c7d7ff;border-radius:5px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#3355aa">
       <strong>PH Location</strong> — renders 3 cascading dropdowns (Province → City/Municipality → Barangay).
       STG export: <code style="background:#e8edff;padding:1px 4px;border-radius:3px">{code}</code>,
@@ -198,6 +216,7 @@ $allQData = $survey->questions->map(function($q) {
         'is_required'   => $q->is_required,
         'help_text'     => $q->help_text,
         'section_id'    => $q->section_id,
+        'config'        => $q->config,
         'options'       => $q->options->map(function($o) {
             return ['id' => $o->id, 'option_code' => $o->option_code, 'label' => $o->label];
         })->values(),
@@ -215,6 +234,7 @@ function onType(){
   document.getElementById('opts-section').style.display=hasOpts?'':'none';
   document.getElementById('rows-section').style.display=t==='grid'?'':'none';
   document.getElementById('opts-note').textContent=t==='grid'?'(columns)':t==='rating'?'(scale points)':'';
+  document.getElementById('num-config-section').style.display=t==='number'?'':'none';
   const locInfo=document.getElementById('ph-loc-info');
   if(locInfo) locInfo.style.display=t==='ph_location'?'':'none';
 }
@@ -267,6 +287,10 @@ function editQ(id){
   document.getElementById('f-section').value=q.section_id||'';
   document.getElementById('save-btn').textContent='Save Changes';
   onType();renderOpts();renderRows();
+  const cfg=q.config||{};
+  document.getElementById('f-num-min').value=cfg.min!==undefined?cfg.min:'';
+  document.getElementById('f-num-max').value=cfg.max!==undefined?cfg.max:'';
+  document.getElementById('f-num-step').value=cfg.step!==undefined?cfg.step:'';
 }
 
 async function saveQ(){
@@ -276,6 +300,16 @@ async function saveQ(){
   if(!code||!label){showErr('Variable code and label are required.');return;}
   const sectionId=document.getElementById('f-section').value||null;
   const payload={variable_code:code,label,type,is_required:req,help_text:help,section_id:sectionId};
+  if(type==='number'){
+    const minV=document.getElementById('f-num-min').value;
+    const maxV=document.getElementById('f-num-max').value;
+    const stepV=document.getElementById('f-num-step').value;
+    const cfg={};
+    if(minV!=='')cfg.min=parseFloat(minV);
+    if(maxV!=='')cfg.max=parseFloat(maxV);
+    if(stepV!=='')cfg.step=parseFloat(stepV);
+    payload.config=Object.keys(cfg).length?cfg:null;
+  }
   try{
     if(editId){
       await api(`/admin/surveys/${SID}/questions/${editId}`,'PUT',payload);
@@ -297,7 +331,7 @@ async function delQ(id){
 function reset(){
   editId=null;opts=[];rows=[];
   document.getElementById('panel-title').textContent='Add Question';
-  ['f-code','f-label','f-help'].forEach(id=>document.getElementById(id).value='');
+  ['f-code','f-label','f-help','f-num-min','f-num-max','f-num-step'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-type').value='single_choice';
   document.getElementById('f-req').value='1';
   document.getElementById('f-section').value='';

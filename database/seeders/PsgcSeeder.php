@@ -80,6 +80,7 @@ class PsgcSeeder extends Seeder
             ],
             'MGN' => [
                 ['Parang', 'Municipality'],
+                ['Calawag', 'Municipality'],
             ],
         ];
     }
@@ -178,6 +179,24 @@ class PsgcSeeder extends Seeder
                 'Gadungan',
                 'Guiday Biruar',
                 'Gumagadong',
+            ],
+            'MGN-CALAWAG' => [
+                'Kabuan',
+                'Landasan',
+                'Limbayan',
+                'Macasandag',
+                'Magsaysay',
+                'Making',
+                'Manion',
+                'Nituan',
+                'Orandang',
+                'Pinantao',
+                'Poblacion',
+                'Poblacion II',
+                'Polloc',
+                'Samberen',
+                'Tagudyungan',
+                'Tuca Maror',
             ],
         ];
     }

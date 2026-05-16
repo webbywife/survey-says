@@ -24,19 +24,40 @@ class ResponseController extends Controller
             ->orderBy('sort_order')
             ->first();
 
+        // City/Municipality: ph_location question or text question with CITY/MUN in variable code
         $locationQuestion = $survey->questions()
-            ->where('type', 'ph_location')
+            ->where(fn($q) =>
+                $q->where('type', 'ph_location')
+                  ->orWhereRaw('UPPER(variable_code) LIKE ?', ['%CITY%'])
+                  ->orWhereRaw('UPPER(variable_code) LIKE ?', ['%MUN%'])
+            )
             ->orderBy('sort_order')
             ->first();
 
-        $questionIds = array_values(array_filter([$nameQuestion?->id, $locationQuestion?->id]));
+        // Barangay: separate open_text question with BARANGAY in variable code or label
+        $barangayQuestion = $survey->questions()
+            ->where(fn($q) =>
+                $q->whereRaw('UPPER(variable_code) LIKE ?', ['%BARANGAY%'])
+                  ->orWhereRaw('UPPER(label) LIKE ?', ['%BARANGAY%'])
+            )
+            ->orderBy('sort_order')
+            ->first();
+
+        $questionIds = array_values(array_filter([
+            $nameQuestion?->id,
+            $locationQuestion?->id,
+            $barangayQuestion?->id,
+        ]));
 
         $responses = $survey->responses()
-            ->when(!empty($questionIds), fn($q) => $q->with(['answers' => fn($q) => $q->whereIn('question_id', $questionIds)]))
+            ->with(['answers' => fn($q) => !empty($questionIds)
+                ? $q->whereIn('question_id', $questionIds)
+                : $q->whereRaw('1=0')
+            ])
             ->latest()
             ->paginate(50);
 
-        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion', 'locationQuestion'));
+        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion', 'locationQuestion', 'barangayQuestion'));
     }
 
     public function show(Survey $survey, Response $response)

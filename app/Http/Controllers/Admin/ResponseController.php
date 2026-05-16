@@ -34,8 +34,10 @@ class ResponseController extends Controller
             ->orderBy('sort_order')
             ->first();
 
-        // Barangay: separate open_text question with BARANGAY in variable code or label
+        // Barangay: separate non-location question with BARANGAY in variable code or label
+        // (exclude ph_location — barangay is already inside that JSON)
         $barangayQuestion = $survey->questions()
+            ->where('type', '!=', 'ph_location')
             ->where(fn($q) =>
                 $q->whereRaw('UPPER(variable_code) LIKE ?', ['%BARANGAY%'])
                   ->orWhereRaw('UPPER(label) LIKE ?', ['%BARANGAY%'])

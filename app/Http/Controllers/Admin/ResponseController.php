@@ -24,12 +24,19 @@ class ResponseController extends Controller
             ->orderBy('sort_order')
             ->first();
 
+        $locationQuestion = $survey->questions()
+            ->where('type', 'ph_location')
+            ->orderBy('sort_order')
+            ->first();
+
+        $questionIds = array_values(array_filter([$nameQuestion?->id, $locationQuestion?->id]));
+
         $responses = $survey->responses()
-            ->when($nameQuestion, fn($q) => $q->with(['answers' => fn($q) => $q->where('question_id', $nameQuestion->id)]))
+            ->when(!empty($questionIds), fn($q) => $q->with(['answers' => fn($q) => $q->whereIn('question_id', $questionIds)]))
             ->latest()
             ->paginate(50);
 
-        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion'));
+        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion', 'locationQuestion'));
     }
 
     public function show(Survey $survey, Response $response)

@@ -15,21 +15,34 @@
         <tr>
           <th>Serial</th>
           @if($nameQuestion)<th>Name</th>@endif
-          <th>Status</th><th>Started</th><th>Completed</th><th>Duration</th><th>IP</th>
+          <th>Status</th><th>Started</th><th>Completed</th>
+          @if($locationQuestion)
+            <th>City / Municipality</th><th>Barangay</th>
+          @else
+            <th>Duration</th><th>IP</th>
+          @endif
           <th></th>
         </tr>
       </thead>
       <tbody>
       @forelse($responses as $r)
-        @php $nameVal = $nameQuestion ? ($r->answers->first()?->value_text ?? '—') : null; @endphp
+        @php
+          $nameVal = $nameQuestion ? ($r->answers->where('question_id', $nameQuestion->id)->first()?->value_text ?? '—') : null;
+          $locRaw  = $locationQuestion ? json_decode($r->answers->where('question_id', $locationQuestion->id)->first()?->value_text ?? '{}', true) : [];
+        @endphp
         <tr>
           <td><code style="font-size:12px">{{ $r->serial }}</code></td>
           @if($nameQuestion)<td style="font-size:13px">{{ $nameVal }}</td>@endif
           <td><span class="badge badge-{{ $r->status===1?'complete':'partial' }}">{{ $r->status===1?'Complete':'Partial' }}</span></td>
           <td>{{ $r->started_at?->format('M d, Y H:i') ?? '—' }}</td>
           <td>{{ $r->completed_at?->format('H:i') ?? '—' }}</td>
-          <td>{{ $r->duration_seconds ? gmdate('i:s', $r->duration_seconds) : '—' }}</td>
-          <td style="color:#aaa;font-size:12px">{{ $r->ip_address ?? '—' }}</td>
+          @if($locationQuestion)
+            <td style="font-size:12px">{{ $locRaw['city'] ?? '—' }}</td>
+            <td style="font-size:12px">{{ $locRaw['barangay'] ?? '—' }}</td>
+          @else
+            <td>{{ $r->duration_seconds ? gmdate('i:s', $r->duration_seconds) : '—' }}</td>
+            <td style="color:#aaa;font-size:12px">{{ $r->ip_address ?? '—' }}</td>
+          @endif
           <td style="white-space:nowrap">
             <a href="{{ route('admin.surveys.responses.show', [$survey, $r]) }}" class="btn btn-secondary btn-sm">View</a>
             @if(auth()->user()->canEditResponses())

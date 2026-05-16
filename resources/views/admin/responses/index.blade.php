@@ -10,12 +10,21 @@
     <table>
       @php
         $colCount = 7 + ($nameQuestion ? 1 : 0);
+        $sortUrl = fn($col) => request()->fullUrlWithQuery([
+            'sort' => $col,
+            'dir'  => ($sort === $col && $dir === 'asc') ? 'desc' : 'asc',
+        ]);
+        $sortIcon = fn($col) => $sort === $col
+            ? ($dir === 'asc' ? ' ↑' : ' ↓')
+            : ' ↕';
       @endphp
       <thead>
         <tr>
-          <th>Serial</th>
+          <th><a href="{{ $sortUrl('serial') }}" style="color:inherit;text-decoration:none;white-space:nowrap">Serial{!! $sortIcon('serial') !!}</a></th>
           @if($nameQuestion)<th>Name</th>@endif
-          <th>Status</th><th>Started</th><th>Completed</th>
+          <th><a href="{{ $sortUrl('status') }}" style="color:inherit;text-decoration:none;white-space:nowrap">Status{!! $sortIcon('status') !!}</a></th>
+          <th><a href="{{ $sortUrl('started_at') }}" style="color:inherit;text-decoration:none;white-space:nowrap">Started{!! $sortIcon('started_at') !!}</a></th>
+          <th><a href="{{ $sortUrl('completed_at') }}" style="color:inherit;text-decoration:none;white-space:nowrap">Completed{!! $sortIcon('completed_at') !!}</a></th>
           <th>City / Municipality</th><th>Barangay</th>
           <th></th>
         </tr>

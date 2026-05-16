@@ -51,15 +51,20 @@ class ResponseController extends Controller
             $barangayQuestion?->id,
         ]));
 
+        $allowedSorts = ['serial', 'status', 'started_at', 'completed_at'];
+        $sort = in_array(request('sort'), $allowedSorts) ? request('sort') : 'started_at';
+        $dir  = request('dir') === 'asc' ? 'asc' : 'desc';
+
         $responses = $survey->responses()
             ->with(['answers' => fn($q) => !empty($questionIds)
                 ? $q->whereIn('question_id', $questionIds)
                 : $q->whereRaw('1=0')
             ])
-            ->latest()
-            ->paginate(50);
+            ->orderBy($sort, $dir)
+            ->paginate(50)
+            ->withQueryString();
 
-        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion', 'locationQuestion', 'barangayQuestion'));
+        return view('admin.responses.index', compact('survey', 'responses', 'nameQuestion', 'locationQuestion', 'barangayQuestion', 'sort', 'dir'));
     }
 
     public function show(Survey $survey, Response $response)
